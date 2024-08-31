@@ -1,4 +1,5 @@
-class Parameters():
+from ParameterInterface import parameters
+class Parameters(parameters):
     trigger =0
     path = "string"
     def __init__(self):
