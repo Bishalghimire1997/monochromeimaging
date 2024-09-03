@@ -1,6 +1,7 @@
-from abc import abstractmethod
-class Camera(abstractmethod):
-    def capture():
+from abc import ABC, abstractmethod
+class Camera(ABC):
+    @abstractmethod
+    def capture(self):
         pass
-    def save():
+    def save(self):
         pass

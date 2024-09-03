@@ -1,7 +1,9 @@
-from ParameterInterface import parameters
-class Parameters(parameters):
+from ParameterInterface import Parameters
+class WebCamParam(Parameters):
     trigger =0
+    snapCounts =1
     path = "string"
+
     def __init__(self):
         pass
     def getTrigger(self):
@@ -15,3 +17,5 @@ class Parameters(parameters):
         pass
     def setPath(self):
         pass
+    def getSnapCounts(self):
+        return self.snapCounts
