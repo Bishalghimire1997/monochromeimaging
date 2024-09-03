@@ -1,28 +1,38 @@
 from ParameterInterface import Parameters as par
 from  WebCamParameters import WebCamParam as wcp
-import cv2
 import threading
 import time 
+import cv2
 from CameraInterface import Camera
 class Snapshot(Camera):
     def __init(self):
         pass
     def capture(self,par):
      cap = cv2.VideoCapture(0)
-     print("image captured")
-    pass
+     if not cap.isOpened():
+      print("Error: Could not open camera.")
+      exit() 
+      ret, frame = cap.read()
+      if ret:
+         return frame,cap
+      else:
+         print("Error: Could not open camera.")
+         exit() 
+
+    
   
-    def save(self,par,img):
+    def save(self,par,fromCapture):
+     cv2.imwrite("Image", fromCapture[0])
+     fromCapture[1].release()
+       
         
             
-        time.sleep(10)
-        print("image saved "+ str(img))
-        pass
+        
     def takeSnapshot(self,par):
         for i in range(par.getSnapCounts()):
-            img=i
-            self.capture(par)
-            thread = threading.Thread(target = self.save, args = (par,img,))
+            
+            fromCam= self.capture(par)
+            thread = threading.Thread(target = self.save, args = (par,fromCam,))
             thread.start()
 
             

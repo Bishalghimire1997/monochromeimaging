@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-
 class Parameters (ABC):
     path = "add path"
     snapCpunt =1
