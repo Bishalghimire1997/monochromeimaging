@@ -1,9 +1,11 @@
 from ParameterInterface import Parameters as par
+from CameraInterface import Camera
 from  WebCamParameters import WebCamParam as wcp
+
 import threading
 import time 
 import cv2
-from CameraInterface import Camera
+
 class Snapshot(Camera):
     def __init(self):
         pass
@@ -37,8 +39,6 @@ class Snapshot(Camera):
 
             
         pass
-obj = Snapshot()
-param = wcp()
-obj.takeSnapshot(param)
+
 
     
