@@ -1,9 +1,11 @@
 from ParameterInterface import Parameters as par
+from CameraInterface import Camera
 from  WebCamParameters import WebCamParam as wcp
-import threading
+
+from threading import Thread
 import time 
 import cv2
-from CameraInterface import Camera
+
 class Snapshot(Camera):
     def __init(self):
         pass
@@ -24,6 +26,7 @@ class Snapshot(Camera):
     def save(self,par,fromCapture):
      cv2.imwrite("Image", fromCapture[0])
      fromCapture[1].release()
+     Thread.join
        
         
             
@@ -32,13 +35,11 @@ class Snapshot(Camera):
         for i in range(par.getSnapCounts()):
             
             fromCam= self.capture(par)
-            thread = threading.Thread(target = self.save, args = (par,fromCam,))
+            thread = Thread(target = self.save, args = (par,fromCam,))
             thread.start()
 
             
         pass
-obj = Snapshot()
-param = wcp()
-obj.takeSnapshot(param)
+
 
     
