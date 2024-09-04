@@ -1,7 +1,7 @@
 from ParameterInterface import Parameters
 class FlirCamParam(Parameters):
      path = "add path"
-     snapCount =1
+     snapCount =100
    
      def getPath(self):
         return self.path
@@ -10,4 +10,4 @@ class FlirCamParam(Parameters):
      def getSnapCounts(self):
         return self.snapCount
 
-   
+  
