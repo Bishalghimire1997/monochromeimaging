@@ -1,13 +1,14 @@
 from ParameterInterface import Parameters
 class FlirCamParam(Parameters):
-     path = "add path"
-     snapCount =100
-   
-     def getPath(self):
-        return self.path
-     def setPath(self,val):
-        self.path =val
-     def getSnapCounts(self):
+   path = "add path"
+   snapCount =100
+   trigger = False
+   def get_path(self):
+       return self.path
+   def set_path(self,val):
+       self.path =val   
+   def get_snap_counts(self):
         return self.snapCount
-
-  
+   def get_trigger(self):
+       return self.trigger
+    
