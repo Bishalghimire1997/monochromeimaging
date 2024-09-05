@@ -8,8 +8,8 @@ Modules:
 """
 import threading
 import PySpin
-from camera_interface import CameraInterface
-from FlirCamParameters import FlirCamParam
+from  camera_interface import CameraInterface
+from flir_camera_parameters import FlirCamParam
 class FlirCamera(CameraInterface):
     """A class to handle FLIR camera operations including taking snapshots and saving images."""
     def __init___(self):
@@ -45,7 +45,7 @@ class FlirCamera(CameraInterface):
         processor = PySpin.ImageProcessor()
         processor.SetColorProcessing(PySpin.SPINNAKER_COLOR_PROCESSING_ALGORITHM_HQ_LINEAR)
         camera.BeginAcquisition()
-        while(param.get_trigger()):
+        while param.get_trigger():
             image = self.capture(camera)
             threading.Thread(target = self.save, args = (image,processor,i)).start()
         camera.EndAcquisition()
@@ -73,8 +73,6 @@ class FlirCamera(CameraInterface):
 
         Returns:
             _type_: _description_ returs images
-        """        
+        """
         return camera.GetNextImage(1000)
-par = FlirCamParam()
-cam = FlirCamera()
-cam.take_snapshot(par)
+    

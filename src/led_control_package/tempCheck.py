@@ -1,0 +1,1 @@
+from image_capture import flir_cam
