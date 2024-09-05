@@ -1,5 +1,5 @@
-import CameraInterface
+import src.ImageCapture.camera_interface as camera_interface
 import WebCam
 import WebCamParameters
-import CameraInterface
+import src.ImageCapture.camera_interface as camera_interface
 import WebCamParameters 
