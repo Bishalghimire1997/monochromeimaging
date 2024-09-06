@@ -1,5 +1,1 @@
-class har():
-    def __init__(self):
-        pass 
-    
-
+from flir_image_capture_package import camera_interface
