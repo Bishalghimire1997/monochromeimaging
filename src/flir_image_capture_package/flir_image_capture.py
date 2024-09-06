@@ -8,7 +8,7 @@ Modules:
 """
 import threading
 import PySpin
-from  camera_interface import CameraInterface
+from camera_interface import CameraInterface
 from flir_camera_parameters import FlirCamParam
 class FlirCamera(CameraInterface):
     """A class to handle FLIR camera operations including taking snapshots and saving images."""

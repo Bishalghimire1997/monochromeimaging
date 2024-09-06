@@ -1,1 +1,5 @@
-from image_capture import flir_cam
+class har():
+    def __init__(self):
+        pass 
+    
+
