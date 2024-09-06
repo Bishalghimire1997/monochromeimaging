@@ -1,3 +1,4 @@
+
 from flir_image_capture_package.parameter_interface import Parameters
 
 class FlirCamParam(Parameters):
@@ -14,8 +15,9 @@ class FlirCamParam(Parameters):
         Initializes the FlirCamParam class with default values.
         """
         self._path = "add path"
-        self._snap_count = 100
+        self._snap_count = 10
         self._trigger = False
+
 
     @property
     def path(self):
@@ -50,5 +52,3 @@ class FlirCamParam(Parameters):
     @path.setter
     def path(self, val):
         self._path = val
-           
-    
