@@ -1,1 +1,1 @@
-from image_capture import flir_cam
+from flir_image_capture_package import camera_interface

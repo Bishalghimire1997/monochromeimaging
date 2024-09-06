@@ -2,7 +2,7 @@ from parameter_interface import Parameters
 class FlirCamParam(Parameters):
    path = "add path"
    snapCount =100
-   trigger = False
+   trigger = False   
    def __init__(self):
        pass
    def get_path(self):
@@ -13,4 +13,3 @@ class FlirCamParam(Parameters):
         return self.snapCount
    def get_trigger(self):
        return self.trigger
-    

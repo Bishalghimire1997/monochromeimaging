@@ -1,0 +1,12 @@
+setup.py
+flir_image_capture_package/__init__.py
+flir_image_capture_package/camera_interface.py
+flir_image_capture_package/flir_camera_parameters.py
+flir_image_capture_package/flir_image_capture.py
+flir_image_capture_package/parameter_interface.py
+led_control_package/__init__.py
+led_control_package/tempCheck.py
+monochromeimaging.egg-info/PKG-INFO
+monochromeimaging.egg-info/SOURCES.txt
+monochromeimaging.egg-info/dependency_links.txt
+monochromeimaging.egg-info/top_level.txt
