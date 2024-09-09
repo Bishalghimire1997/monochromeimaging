@@ -17,6 +17,7 @@ class FlirCamParam(Parameters):
         self._path = "add path"
         self._snap_count = 10
         self._trigger = False
+        
 
 
     @property
