@@ -7,7 +7,6 @@ Modules:
     FlirCamParameters: Contains the FlirCamParam class for managing camera parameters.
 """
 import threading
-from datetime import datetime
 import PySpin
 from flir_image_capture_package.camera_interface import CameraInterface
 from flir_image_capture_package.flir_camera_parameters import FlirCamParam

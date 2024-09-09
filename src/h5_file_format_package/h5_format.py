@@ -17,6 +17,6 @@ class H5Fromat():
         Args:
             image (numpy array): Image captured by camera
             itter (int): the key to the image
-        """              
+        """
         self._image=File(self._filename +".h5","r+")
         self._image.create_dataset(str(itter),data=image)
