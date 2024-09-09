@@ -7,32 +7,38 @@ Modules:
     FlirCamParameters: Contains the FlirCamParam class for managing camera parameters.
 """
 import threading
+from datetime import datetime
 import PySpin
 from flir_image_capture_package.camera_interface import CameraInterface
 from flir_image_capture_package.flir_camera_parameters import FlirCamParam
+from h5_file_format_package.h5_format import H5Fromat
 class FlirCamera(CameraInterface):
     """A class to handle FLIR camera operations including taking snapshots and saving images."""
-    def __init___(self):
-        pass
-    def take_snapshot(self,param:FlirCamParam):
+    def __init__(self,param:FlirCamParam):
+        self._param = param
+        self._im_file = H5Fromat(param.path)
+    def take_snapshot(self):
         """_summary_ 
         takes "n" number of images. "n"  can be defined in "flir_camera_ prameter" class
         Args:
             param (FlirCamParam): Instance of FlirCamPara class
         """
+        image=0
         system= PySpin.System.GetInstance()
         camera = system.GetCameras()[0]
         camera.Init()
         processor = PySpin.ImageProcessor()
         processor.SetColorProcessing(PySpin.SPINNAKER_COLOR_PROCESSING_ALGORITHM_HQ_LINEAR)
         camera.BeginAcquisition()
-        for i in range(param.snap_count):
+        for i in range(self._param.snap_count):
             image = self.capture(camera)
-            threading.Thread(target = self.save, args = (image,processor,i)).start()
+            if not image.IsIncomplete():
+                threading.Thread(target = self.save_h5, args = (image,i)).start()
         camera.EndAcquisition()
         camera.DeInit()
         del camera
         system.ReleaseInstance()
+        
     def capture_continious(self,param:FlirCamParam):
         """_summary_
         captures the images until the trigger is on
@@ -47,11 +53,13 @@ class FlirCamera(CameraInterface):
         camera.BeginAcquisition()
         while param.trigger:
             image = self.capture(camera)
-            threading.Thread(target = self.save_continious, args = (image,processor)).start()
+            if not image.IsIncomplete():
+                threading.Thread(target = self.save_continious, args = (image,processor)).start()
         camera.EndAcquisition()
         camera.DeInit()
         del camera
         system.ReleaseInstance()
+        
 
     def save(self,image_result,processor,itter):
         """_summary_ 
@@ -65,6 +73,7 @@ class FlirCamera(CameraInterface):
         image_converted = processor.Convert(image_result, PySpin.PixelFormat_Mono8)
         image_converted.Save("Image"+str(itter)+".jpg")
         image_result.Release()
+       
     
    
     def save_continious(self,image_result,processor):
@@ -80,6 +89,17 @@ class FlirCamera(CameraInterface):
         image_converted.Save("Image"+".jpg")
         image_result.Release()
 
+    def save_h5(self,image_result,itter):
+        """Saves the images in .h5 file format
+
+        Args:
+            image_result (): image from FLIR camera
+            itter ():number of time image has been captured
+        """        
+        
+        image_converted = image_result.GetNDArray()       
+        self._im_file.record_images(image_converted,str(datetime.now()))
+
     def capture(self,camera):
         """_summary_
 
@@ -89,7 +109,5 @@ class FlirCamera(CameraInterface):
         Returns:
             _type_: _description_ returs images
         """
-        return camera.GetNextImage(1000)
-obj  =FlirCamera()
-par = FlirCamParam()
-obj.take_snapshot(par)
+        return camera.GetNextImage()
+    

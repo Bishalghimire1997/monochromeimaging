@@ -14,7 +14,7 @@ class FlirCamParam(Parameters):
         """
         Initializes the FlirCamParam class with default values.
         """
-        self._path = "add path"
+        self._path = "test"
         self._snap_count = 10
         self._trigger = False
         
@@ -53,3 +53,7 @@ class FlirCamParam(Parameters):
     @path.setter
     def path(self, val):
         self._path = val
+
+    @snap_count.setter
+    def snap_count(self,val):
+        self._snap_count=val
