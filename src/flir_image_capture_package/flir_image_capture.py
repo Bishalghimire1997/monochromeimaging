@@ -95,10 +95,9 @@ class FlirCamera(CameraInterface):
         Args:
             image_result (): image from FLIR camera
             itter ():number of time image has been captured
-        """        
-        
-        image_converted = image_result.GetNDArray()       
-        self._im_file.record_images(image_converted,str(datetime.now()))
+        """
+        image_converted = image_result.GetNDArray()
+        self._im_file.record_images(image_converted,itter)
 
     def capture(self,camera):
         """_summary_
