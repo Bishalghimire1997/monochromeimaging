@@ -6,7 +6,7 @@ class ShutterTimeControl(Parameters):
     """
     changes the time interval to keep the shutter open in 
     """
-    def __init__(self,camera:Camera):
+    def __init__(self,cam:Camera):
         pass
     def auto_shutter_time(self,cam:Camera):
         """resets the shutter time in camera instace to default

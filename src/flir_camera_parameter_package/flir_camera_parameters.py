@@ -19,8 +19,6 @@ class FlirCamParam(Parameters):
         self._trigger:bool = False
         self._default_shutter_time:bool =True
         self._shutter_time:int=5000
-
-    
     @property
     def default_shutter_time(self):
         """Flag to check if the manual shutter speed is requested.
@@ -67,6 +65,11 @@ class FlirCamParam(Parameters):
     @snap_count.setter
     def snap_count(self,val):
         self._snap_count=val
+
     @shutter_time.setter
     def shutter_time(self,val:int):
-        self.shutter_time=val
+        self._shutter_time=val
+
+    @default_shutter_time.setter
+    def default_shutter_time(self,val:bool):
+        self._default_shutter_time =val
