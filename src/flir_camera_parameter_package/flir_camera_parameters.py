@@ -1,5 +1,5 @@
 
-from flir_image_capture_package.parameter_interface import Parameters
+from flir_camera_parameter_package.parameter_interface import Parameters
 
 class FlirCamParam(Parameters):
     """
@@ -14,12 +14,25 @@ class FlirCamParam(Parameters):
         """
         Initializes the FlirCamParam class with default values.
         """
-        self._path = "test"
-        self._snap_count = 10
-        self._trigger = False
-        
+        self._path:str = "test"
+        self._snap_count:int = 10
+        self._trigger:bool = False
+        self._default_shutter_time:bool =True
+        self._shutter_time:int=5000
 
-
+    
+    @property
+    def default_shutter_time(self):
+        """Flag to check if the manual shutter speed is requested.
+          Returns: Boolean Flag 
+        """
+        return self._default_shutter_time
+    @property
+    def shutter_time(self):
+        """gives time period for which the shutter should remain open 
+        Returns: shutter open time as integer
+        """
+        return self._shutter_time
     @property
     def path(self):
         """
@@ -47,9 +60,6 @@ class FlirCamParam(Parameters):
             bool: The trigger status.
         """
         return self._trigger
-
-
-
     @path.setter
     def path(self, val):
         self._path = val
@@ -57,3 +67,6 @@ class FlirCamParam(Parameters):
     @snap_count.setter
     def snap_count(self,val):
         self._snap_count=val
+    @shutter_time.setter
+    def shutter_time(self,val:int):
+        self.shutter_time=val
