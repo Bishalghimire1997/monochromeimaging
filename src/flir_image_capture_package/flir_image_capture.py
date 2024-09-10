@@ -8,6 +8,7 @@ Modules:
 """
 import threading
 import PySpin
+from PySpin import Camera
 from flir_image_capture_package.camera_interface import CameraInterface
 from flir_camera_parameter_package .flir_camera_parameters import FlirCamParam
 from h5_file_format_package.h5_format import H5Fromat
@@ -16,27 +17,29 @@ class FlirCamera(CameraInterface):
     def __init__(self,param:FlirCamParam):
         self._param = param
         self._im_file = H5Fromat(param.path)
+        self._system= PySpin.System.GetInstance()
+        self._cam:Camera = self._system.GetCameras()[0]
+        self._cam.Init()
+        
+        
     def take_snapshot(self):
         """_summary_ 
         takes "n" number of images. "n"  can be defined in "flir_camera_ prameter" class
         Args:
             param (FlirCamParam): Instance of FlirCamPara class
         """
-        image=0
-        system= PySpin.System.GetInstance()
-        camera = system.GetCameras()[0]
-        camera.Init()
+        
         processor = PySpin.ImageProcessor()
         processor.SetColorProcessing(PySpin.SPINNAKER_COLOR_PROCESSING_ALGORITHM_HQ_LINEAR)
-        camera.BeginAcquisition()
+        self._cam.BeginAcquisition()
         for i in range(self._param.snap_count):
-            image = self.capture(camera)
+            image = self.capture(self._cam)
             if not image.IsIncomplete():
-                threading.Thread(target = self.save_h5, args = (image,i)).start()
-        camera.EndAcquisition()
-        camera.DeInit()
-        del camera
-        system.ReleaseInstance()
+                threading.Thread(target = self.save, args = (image,processor,i)).start()
+        self._cam.EndAcquisition()
+        self._cam.DeInit()
+        del self._cam
+        self._system.ReleaseInstance()
     def capture_continious(self,param:FlirCamParam):
         """_summary_
         captures the images until the trigger is on
@@ -103,3 +106,15 @@ class FlirCamera(CameraInterface):
             _type_: _description_ returs images
         """
         return camera.GetNextImage()
+    
+    @property
+    def camera(self):
+        """use to get self._cam 
+
+        Returns:
+            Camera: instance of one of the connected FLIR camera
+        """        
+        return self._cam
+    @camera.setter
+    def camera(self,camera:Camera):
+        self._cam = camera
