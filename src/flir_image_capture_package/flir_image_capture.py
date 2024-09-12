@@ -22,7 +22,7 @@ class FlirCamera(CameraInterface):
         self._cam:Camera = self._system.GetCameras()[0]
         self._cam.Init()
         self._shutter = ShutterTimeControl(self._cam)
-        if not param.default_shutter_time: #Check if manual shutter time is requested            
+        if not param.default_shutter_time: #Check if manual shutter time is requested         
             self._cam =self._shutter.manual_shutter(self._cam,param.shutter_time)
         else:
             self.cam = self._shutter.auto_shutter_time(self._cam)

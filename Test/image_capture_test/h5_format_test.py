@@ -7,7 +7,7 @@ from flir_camera_parameter_package.flir_camera_parameters import FlirCamParam
 from flir_image_capture_package.flir_image_capture import FlirCamera
 start= time.time()
 cameraParam = FlirCamParam()
-cameraParam.snap_count = 10
+cameraParam.snap_count = 100
 
 camera =FlirCamera(cameraParam)
 camera.take_snapshot()
