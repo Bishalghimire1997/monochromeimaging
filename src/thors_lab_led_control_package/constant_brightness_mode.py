@@ -30,5 +30,4 @@ class ConstantBrightness(CommonMethods):
     def set_led_brigntness(self,val:float):
         """Query the maximum brightness in % of limit current
         """
-        self._instrument.write('SOURce:CBRightness:BRIGhtness:LEVel:AMPLitude '+str(val)) 
-        print(val)
+        self._instrument.write('SOURce:CBRightness:BRIGhtness:LEVel:AMPLitude '+str(val))
