@@ -14,18 +14,17 @@ class LedControl():
     def __init__(self):
         self._leds=[]
         self._resource_manager = ResourceManager()
-        self._cluster_brightness = 300 # maximum brigntness taht three led is allowed to produce combined
+        self._cluster_brightness = 100
         self._leds = self._detect_led()
 
     def _detect_led(self):
         relevant_resources=[]
         resources = self._resource_manager.list_resources()
+        print(resources)
         relevant_resources.append(resources [0])
         relevant_resources.append(resources [1])
         relevant_resources.append(resources [2])
         return self._open_resources(relevant_resources)
-
-        
     def _sim_sine(self,phase:int,obj: ConstantBrightness):
         """Simalates the sine wave 
         """
@@ -77,7 +76,7 @@ class LedControl():
         """
         obj_cb_red = ConstantBrightness(self._leds[0])
         obj_cb_blue = ConstantBrightness(self._leds[1])
-        obj_cb_green = ConstantBrightness(self._leds[2])    
+        obj_cb_green = ConstantBrightness(self._leds[2])
         thread1 = threading.Thread (target= self._sim_sine, args =[phase_r,obj_cb_red])
         thread2 = threading.Thread (target= self._sim_sine, args =[phase_b,obj_cb_blue])
         thread3 = threading.Thread (target= self._sim_sine, args =[phase_g,obj_cb_green])
@@ -109,5 +108,6 @@ class LedControl():
             return br
         for i in ratio:
             br.append(self._cluster_brightness*i/ratio_sum)   
+        print(br)
         return br
     
