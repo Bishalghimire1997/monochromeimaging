@@ -15,7 +15,7 @@ def manual():
     Method for manual shutter value
     """
     param.default_shutter_time = False
-    param.shutter_time = 10000
+    param.shutter_time = 200
     camera2 = FlirCamera(param)
     camera2.take_snapshot()
-auto()
+manual()
