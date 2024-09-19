@@ -18,3 +18,4 @@ def cluster_on_off_test():
                 vect =[i,j,k]
                 obj.simulate_color(vect,5)
 cluster_on_off_test()
+obj.simulate_sine_at(0,20,90)

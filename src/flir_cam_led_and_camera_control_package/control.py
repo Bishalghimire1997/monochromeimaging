@@ -14,12 +14,45 @@ class Sync():
         """
         chapture the images in sequencxe of Red Green and Blue
         """
+        self.red_capture()
+        self.blue_capture()
+        self.green_capture()
+        self.dark_capture()
+        
+
+    def red_capture(self):
+        self._param.path = "red"
+        self._param.default_shutter_time = False
+        self._param.shutter_time = 30000
+        camer= FlirCamera(self._param)       
         red =[0,1,0]
-        blue =[1,0,0]
-        green = [0,0,1]
         self._led.simulate_color(red,5)
-        self._led.simulate_color(green,5)
+        camer.take_snapshot()
+    def blue_capture(self):
+        self._param.path="blue"
+        self._param.default_shutter_time = False
+        self._param.shutter_time = 30000
+        camera= FlirCamera(self._param) 
+        blue =[1,0,0]
+        self._led.simulate_color(blue,15)
+        camera.take_snapshot()
+    def green_capture(self):
+        self._param.path="green"
+        self._param.default_shutter_time = False
+        self._param.shutter_time = 30000
+        camer= FlirCamera(self._param) 
+        blue =[0,0,1]
         self._led.simulate_color(blue,5)
-        self._led.close_resources()
-obj = Sync()
-obj.capture_pause_capture()
+        camer.take_snapshot()
+    def dark_capture(self):
+        self._param.path = "dark"
+        dark = [0,0,0]
+        self._param.default_shutter_time = False
+        self._param.shutter_time = 30000    
+        camer= FlirCamera(self._param)    
+        self._led.simulate_color(dark,5)
+        camer.take_snapshot()
+        
+    
+        
+
