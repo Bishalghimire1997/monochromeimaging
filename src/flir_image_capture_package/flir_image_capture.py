@@ -33,8 +33,8 @@ class FlirCamera(CameraInterface):
         Args:
             param (FlirCamParam): Instance of FlirCamPara class
         """
-        processor = PySpin.ImageProcessor()
-        processor.SetColorProcessing(PySpin.SPINNAKER_COLOR_PROCESSING_ALGORITHM_EDGE_SENSING)
+        #processor = PySpin.ImageProcessor()
+        #processor.SetColorProcessing(PySpin.SPINNAKER_COLOR_PROCESSING_ALGORITHM_EDGE_SENSING)
         self._cam.BeginAcquisition()
         for i in range(self._param.snap_count):
             image = self.capture(self._cam)
