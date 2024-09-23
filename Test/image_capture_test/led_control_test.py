@@ -17,6 +17,5 @@ def cluster_on_off_test():
             for k in range(2):
                 vect =[i,j,k]
                 obj.simulate_color(vect,5)
-
-obj.simulate_sine_at(0,20,90)
-obj.close_resources()
+cluster_on_off_test()
+obj.simulate_sine_at(20,40,60)

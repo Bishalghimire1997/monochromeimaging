@@ -2,6 +2,7 @@
 """
 from h5py import File
 
+
 class H5Fromat():
     """
     class to save the images in .h5 file format
@@ -11,7 +12,7 @@ class H5Fromat():
         self._filename =file_name
 
 
-    def record_images(self,image,itter) : 
+    def record_images(self,image,itter) :
         """_summary_ saves the images in h5 file format
 
         Args:
@@ -20,3 +21,5 @@ class H5Fromat():
         """
         self._image=File(self._filename +".h5","r+")
         self._image.create_dataset(str(itter),data=image)
+
+   

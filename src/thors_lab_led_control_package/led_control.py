@@ -83,6 +83,7 @@ class LedControl():
         thread1.start()
         thread2.start()
         thread3.start()
+        
     def simulate_color(self,ratio:list, delay: int):
         """genere color for delay interval of time 
 
