@@ -14,7 +14,7 @@ class LedControl():
     def __init__(self):
         self._leds=[]
         self._resource_manager = ResourceManager()
-        self._cluster_brightness = 100
+        self._cluster_brightness = 50
         self._leds = self._detect_led()
 
     def _detect_led(self):
