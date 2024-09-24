@@ -17,7 +17,7 @@ def record_image_test():
     elapsed_time = end_time - start
     print(f"Time taken to run the block of code: {elapsed_time} seconds")
 def read_and_display_image_test():
-    image = ReadH5.read_files("dark.h5","8")
+    image = ReadH5.read_files("green.h5","3")
     ReadH5.open_images(image)
 
 read_and_display_image_test()
