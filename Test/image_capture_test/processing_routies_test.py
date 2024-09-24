@@ -42,4 +42,3 @@ def image_reconstruction_using_ratio():
     Processing.open_images(color_image)
 
 image_reconstruction_test()
-
