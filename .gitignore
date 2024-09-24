@@ -1,0 +1,5 @@
+# Ignore .h5 files
+*.h5
+
+# Ignore .pyc files
+*.pyc
