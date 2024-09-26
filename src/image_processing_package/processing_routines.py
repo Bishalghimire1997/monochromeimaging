@@ -75,4 +75,31 @@ class Processing():
         """
         scaled= ((arr-np.min(arr))/(np.max(arr)-np.min(arr)))*255
         return scaled.astype(np.uint8)
-    
+    @staticmethod
+    def tune( image_input, image_target):
+        """This methods returns the weight for liner transformation 
+        the weights are computed based on the equation 
+        w∗=(XT X)−1 XTy : analytical solotion for liner regression 
+        This method can be used for color correction.
+        Args:
+            image_input (numpy array): _description_
+            image_target (numyp array): _description_
+
+        Returns:
+             numpy array: Optimum weight that describes the relation between Input image and Targer image;
+        """        
+        x_trans_dot_x = np.dot(image_input.T,image_input)
+        x_trans_dot_y = np.dot(image_input.T,image_target)
+        return np.dot(np.linalg.inv(x_trans_dot_x), x_trans_dot_y )
+    @staticmethod
+    def linear_transform(image,weights):
+        """_summary_
+
+        Args:
+            image (numpy array): image to be tune
+            weights (numpy array): weights for linear transforamtion 
+
+        Returns:
+            numpy array: tuned image
+        """
+        return np.dot(weights,image)
