@@ -76,7 +76,7 @@ class Processing():
         scaled= ((arr-np.min(arr))/(np.max(arr)-np.min(arr)))*255
         return scaled.astype(np.uint8)
     @staticmethod
-    def tune( image_input, image_target):
+    def tune_monochrome( image_input, image_target):
         """This methods returns the weight for liner transformation 
         the weights are computed based on the equation 
         w∗=(XT X)−1 XTy : analytical solotion for liner regression 
@@ -92,7 +92,16 @@ class Processing():
         x_trans_dot_y = np.dot(image_input.T,image_target)
         return np.dot(np.linalg.inv(x_trans_dot_x), x_trans_dot_y )
     @staticmethod
-    def linear_transform(image,weights):
+    def tune_color(image_input, image_target):
+        channels_input = image_input.T  # Transposing to get channels separately
+        channels_target = image_target.T
+        weight = []
+        for idx, (input_channel, target_channel) in enumerate(zip(channels_input, channels_target)):
+            weight.append(Processing.tune_monochrome(input_channel, target_channel))
+        return np.array(weight).T
+
+    @staticmethod
+    def linear_transform_monochrome(image,weights):
         """_summary_
 
         Args:
@@ -103,3 +112,12 @@ class Processing():
             numpy array: tuned image
         """
         return np.dot(weights,image)
+    @staticmethod
+    def linear_transform_color(color_weights,color_image):
+        weights = color_weights.T  # Transposing to get channels separately
+        channels = color_image.T
+        transformed = []
+        for idx, (input_weight, input_channel) in enumerate(zip(weights, channels)):
+            transformed.append(Processing.linear_transform_monochrome(input_weight.T, input_channel))
+        return np.array(transformed).T
+
