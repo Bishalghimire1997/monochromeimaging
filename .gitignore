@@ -24,3 +24,6 @@ Thumbs.db
 
 # Ignore .pyc files
 *.pyc
+
+*.jpg
+*.webp

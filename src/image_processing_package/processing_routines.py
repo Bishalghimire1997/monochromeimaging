@@ -1,5 +1,6 @@
 """Class to process the image"""
 import cv2
+from h5_file_format_package.h5_format import H5Fromat
 import numpy as np
 class Processing():
     """class to process the image """    
@@ -76,48 +77,16 @@ class Processing():
         scaled= ((arr-np.min(arr))/(np.max(arr)-np.min(arr)))*255
         return scaled.astype(np.uint8)
     @staticmethod
-    def tune_monochrome( image_input, image_target):
-        """This methods returns the weight for liner transformation 
-        the weights are computed based on the equation 
-        w∗=(XT X)−1 XTy : analytical solotion for liner regression 
-        This method can be used for color correction.
-        Args:
-            image_input (numpy array): _description_
-            image_target (numyp array): _description_
+    def color_correction (roi:tuple,refrence_color: list, image):
+        x, y, w, h = roi
+        cropped_image = image[y:y+h, x:x+w]
+        b_channel, g_channel, r_channel = cv2.split(cropped_image)
+        x=np.array(  np.array([np.mean(b_channel), np.mean(g_channel), np.mean(r_channel)]))
 
-        Returns:
-             numpy array: Optimum weight that describes the relation between Input image and Targer image;
-        """        
-        x_trans_dot_x = np.dot(image_input.T,image_input)
-        x_trans_dot_y = np.dot(image_input.T,image_target)
-        return np.dot(np.linalg.inv(x_trans_dot_x), x_trans_dot_y )
-    @staticmethod
-    def tune_color(image_input, image_target):
-        channels_input = image_input.T  # Transposing to get channels separately
-        channels_target = image_target.T
-        weight = []
-        for idx, (input_channel, target_channel) in enumerate(zip(channels_input, channels_target)):
-            weight.append(Processing.tune_monochrome(input_channel, target_channel))
-        return np.array(weight).T
-
-    @staticmethod
-    def linear_transform_monochrome(image,weights):
-        """_summary_
-
-        Args:
-            image (numpy array): image to be tune
-            weights (numpy array): weights for linear transforamtion 
-
-        Returns:
-            numpy array: tuned image
-        """
-        return np.dot(weights,image)
-    @staticmethod
-    def linear_transform_color(color_weights,color_image):
-        weights = color_weights.T  # Transposing to get channels separately
-        channels = color_image.T
-        transformed = []
-        for idx, (input_weight, input_channel) in enumerate(zip(weights, channels)):
-            transformed.append(Processing.linear_transform_monochrome(input_weight.T, input_channel))
-        return np.array(transformed).T
-
+        
+        y = np.array(refrence_color)
+        print(x,y)
+        W, _, _, _ = np.linalg.lstsq(x.T, y, rcond=None)
+        print(w)
+        
+        pass
