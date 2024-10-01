@@ -1,6 +1,7 @@
 """Class to process the image"""
 import cv2
 import numpy as np
+
 class Processing():
     """class to process the image """    
     @staticmethod
@@ -74,50 +75,73 @@ class Processing():
             numpy array:scaled images
         """
         scaled= ((arr-np.min(arr))/(np.max(arr)-np.min(arr)))*255
-        return scaled.astype(np.uint8)
+        return scaled.astype(np.uint8)    
     @staticmethod
-    def tune_monochrome( image_input, image_target):
-        """This methods returns the weight for liner transformation 
-        the weights are computed based on the equation 
-        w∗=(XT X)−1 XTy : analytical solotion for liner regression 
-        This method can be used for color correction.
+    def get_weight(roi:tuple,refrence_color: list, image):
+        """Generates the weight required to reansfer average pixel value of ROI to refrence p[ixel value 
         Args:
-            image_input (numpy array): _description_
-            image_target (numyp array): _description_
-
+            roi (tuple): Region of interest 
+            refrence_color (list): To what color ROI be transformed
+            image (np array): Color imaga as a anumpy array
         Returns:
-             numpy array: Optimum weight that describes the relation between Input image and Targer image;
-        """        
-        x_trans_dot_x = np.dot(image_input.T,image_input)
-        x_trans_dot_y = np.dot(image_input.T,image_target)
-        return np.dot(np.linalg.inv(x_trans_dot_x), x_trans_dot_y )
-    @staticmethod
-    def tune_color(image_input, image_target):
-        channels_input = image_input.T  # Transposing to get channels separately
-        channels_target = image_target.T
-        weight = []
-        for idx, (input_channel, target_channel) in enumerate(zip(channels_input, channels_target)):
-            weight.append(Processing.tune_monochrome(input_channel, target_channel))
-        return np.array(weight).T
-
-    @staticmethod
-    def linear_transform_monochrome(image,weights):
-        """_summary_
-
-        Args:
-            image (numpy array): image to be tune
-            weights (numpy array): weights for linear transforamtion 
-
-        Returns:
-            numpy array: tuned image
+            numpy array : Weights value 
         """
-        return np.dot(weights,image)
+        x, y, w, h = roi
+        cropped_image = image[y:y+h, x:x+w]
+        b_pixel = np.mean(cropped_image[:, :, 0])
+        g_pixel = np.mean(cropped_image[:, :, 1])
+        r_pixel = np.mean(cropped_image[:, :, 2])
+        pixel_value = np.array([[b_pixel,g_pixel,r_pixel]])
+        print(pixel_value)
+        refrence = np.array([refrence_color])
+        weight, _, _, _ = np.linalg.lstsq(pixel_value, refrence, rcond=None)
+        return weight
     @staticmethod
-    def linear_transform_color(color_weights,color_image):
-        weights = color_weights.T  # Transposing to get channels separately
-        channels = color_image.T
-        transformed = []
-        for idx, (input_weight, input_channel) in enumerate(zip(weights, channels)):
-            transformed.append(Processing.linear_transform_monochrome(input_weight.T, input_channel))
-        return np.array(transformed).T
+    def __fit(image, weight):
+        """transforms the image with the help of weight 
+
+        Args:
+            image (numpy array ): Color image to be transformation 
+            weight (numpy array): Weights for transformation 
+
+        Returns:
+            _type_: _description_
+        """
+        image_reshaped = image.reshape(-1, 3)
+        transformed_image = np.dot(image_reshaped, weight.T)
+        transformed_image = np.clip(transformed_image, 0, 255)
+        transformed_image = transformed_image.reshape(len(image), len(image[0]), 3)
+        return transformed_image.astype(np.uint8)
+    @staticmethod
+    def fit_colors(wb,wg,wr,colored_image):
+        """transforms the color based on weights
+
+        Args:
+            wb ( numpy array): _description_
+            wg (numpy array ): _description_
+            wr (numpy array): _description_
+            colored_image (numpy array): _description_
+
+        Returns:
+            Transformed image: Image after transformation 
+        """        
+        blue_fit = Processing.__fit(colored_image,wb)
+        green_fit = Processing.__fit(colored_image,wg)
+        red_fit = Processing.__fit(colored_image,wr)        
+        return  np.stack((blue_fit[:, :, 0],green_fit[:, :, 1],red_fit[:, :, 2]),axis = -1)
+          
+    
+       
+         
+         
+
+
+    
+
+
+        
+        
+
+
+
 
