@@ -97,7 +97,7 @@ class Processing():
         weight, _, _, _ = np.linalg.lstsq(pixel_value, refrence, rcond=None)
         return weight
     @staticmethod
-    def __fit(image, weight):
+    def fit(image, weight):
         """transforms the image with the help of weight 
 
         Args:
@@ -108,9 +108,10 @@ class Processing():
             _type_: _description_
         """
         image_reshaped = image.reshape(-1, 3)
-        transformed_image = np.dot(image_reshaped, weight.T)
+        transformed_image = np.dot(image_reshaped, weight)
         transformed_image = np.clip(transformed_image, 0, 255)
-        transformed_image = transformed_image.reshape(len(image), len(image[0]), 3)
+        transformed_image = transformed_image.reshape(
+            len(image), len(image[0]), 3)
         return transformed_image.astype(np.uint8)
     @staticmethod
     def fit_colors(wb,wg,wr,colored_image):

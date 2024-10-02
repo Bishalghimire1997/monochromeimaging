@@ -90,5 +90,3 @@ def weight_application_test():
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-
-weight_application_test()
