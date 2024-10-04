@@ -5,12 +5,10 @@ import cv2
 def weight_fider_least_square():
     image_input = image_reconstruction_test()
     image_target = cv2.imread("RGB.bmp")
-    target_matrix = get_matrix(image_target,240)
-    input_matrix= get_matrix(image_input,240)
-    weight= np.linalg.lstsq(input_matrix,target_matrix)
-    transformed_image= Processing.fit(image_input,weight[0])
-    Processing.open_images(transformed_image)
-    print(weight)
+    weight =Processing.get_color_correction_matrix(image_input,image_target,24)
+    Processing.open_images(Processing.corrrect_color(image_input,weight))
+
+    
       
 def weightFinder():
     target=np.array( [[255,0,0],[0,255,0],[0,0,255]])

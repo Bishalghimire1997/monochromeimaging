@@ -78,7 +78,8 @@ class Processing():
         return scaled.astype(np.uint8)    
     @staticmethod
     def get_weight(roi:tuple,refrence_color: list, image):
-        """Generates the weight required to reansfer average pixel value of ROI to refrence p[ixel value 
+        """Generates the weight required to reansfer average
+          pixel value of ROI to refrence p[ixel value 
         Args:
             roi (tuple): Region of interest 
             refrence_color (list): To what color ROI be transformed
@@ -114,8 +115,9 @@ class Processing():
             len(image), len(image[0]), 3)
         return transformed_image.astype(np.uint8)
     @staticmethod
-    def get_colot_correction_matrix(image_to_be_corrected, refrence_image,number_of_rois:int):
-        """generates the weight that can transform the color of imput image into the olor of refrence image
+    def get_color_correction_matrix(image_to_be_corrected, refrence_image,number_of_rois:int):
+        """generates the weight that can transform the color-
+          of imput image into the olor of refrence image
 
         Args:
             image_to_be_corrected (numpy array): image whose color should be corrected
@@ -128,9 +130,7 @@ class Processing():
         target_matrix = Processing.__get_matrix(refrence_image,number_of_rois)
         input_matrix= Processing.__get_matrix(image_to_be_corrected,number_of_rois)
         weight= np.linalg.lstsq(input_matrix,target_matrix)
-        transformed_image= Processing.fit(image_to_be_corrected,weight[0])
-        Processing.open_images(transformed_image)
-        return weight
+        return weight[0]
     @staticmethod
     def corrrect_color(image, weight):
         """corrects the color in the image WRT weight 
@@ -141,26 +141,27 @@ class Processing():
 
         Returns: Corrected image 
             numpy array: Color corrected image
-        """        
+        """
         h, w, c = image.shape
         flattened_image = image.reshape(-1, 3)
         transformed_image_flat = flattened_image @ weight.T
         transformed_image_flat = np.clip(transformed_image_flat, 0, 255)
         transformed_image = transformed_image_flat.reshape(h, w, c)
-        return transformed_image.astype(np.uint8)
-     
+        return transformed_image.astype(np.uint8)    
     @staticmethod
     def __get_matrix(image,total_sample_roi):
         i=0
         current= []
-        while(i<total_sample_roi):
-            current.append(Processing.__get_pixel(cv2.selectROI("Select ROI", image, showCrosshair=True, fromCenter=False),image))
+        while i<total_sample_roi:
+            current.append(Processing.__get_pixel(
+                cv2.selectROI("Select ROI",
+                image, showCrosshair=True, fromCenter=False),image))
             i=i+1
         return   np.array(current)
-    
     @staticmethod
     def __get_pixel(roi:tuple, image):
-        """Generates the weight required to reansfer average pixel value of ROI to refrence p[ixel value 
+        """Generates the weight required to reansfer average pixel
+          value of ROI to refrence p[ixel value 
         Args:
             roi (tuple): Region of interest 
             refrence_color (list): To what color ROI be transformed
