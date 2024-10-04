@@ -3,11 +3,10 @@ from processing_routies_test import image_reconstruction_test
 from image_processing_package.processing_routines import  Processing
 import cv2
 def weight_fider_least_square():
-    target=np.array( [[255,0,0],[0,255,0],[0,0,255]])
     image_input = image_reconstruction_test()
     image_target = cv2.imread("RGB.bmp")
-    target_matrix = get_matrix(image_target,24)
-    input_matrix= get_matrix(image_input,24)
+    target_matrix = get_matrix(image_target,240)
+    input_matrix= get_matrix(image_input,240)
     weight= np.linalg.lstsq(input_matrix,target_matrix)
     transformed_image= Processing.fit(image_input,weight[0])
     Processing.open_images(transformed_image)
@@ -38,6 +37,7 @@ def get_matrix(image,total_sample_roi):
       i=0
       current= []
       while(i<total_sample_roi):
+        
             current.append(get_pixel(cv2.selectROI("Select ROI", image, showCrosshair=True, fromCenter=False),image))
             i=i+1     
 
