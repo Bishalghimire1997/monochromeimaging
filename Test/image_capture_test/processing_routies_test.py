@@ -54,7 +54,7 @@ def image_reconstruction_using_white():
  
 def color_correction_test():
     "color correction test"
-    image_input = image_reconstruction_using_white()
+    image_input = image_reconstruction_test()
     image_target = cv2.imread("RGB.bmp")
     weight =Processing.get_color_correction_matrix(image_input,image_target,24)
     Processing.open_images(Processing.corrrect_color(image_input,weight))

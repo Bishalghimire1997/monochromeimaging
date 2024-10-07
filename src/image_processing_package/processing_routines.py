@@ -163,7 +163,7 @@ class Processing():
         """
         h, w, c = image.shape
         flattened_image = image.reshape(-1, 3)
-        transformed_image_flat = flattened_image @ weight.T
+        transformed_image_flat = flattened_image @ weight
         transformed_image_flat = np.clip(transformed_image_flat, 0, 255)
         transformed_image = transformed_image_flat.reshape(h, w, c)
         return transformed_image.astype(np.uint8)    
