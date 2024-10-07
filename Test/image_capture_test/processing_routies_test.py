@@ -9,16 +9,12 @@ def histogram_test():
     """ test method
     """
     obj = ReadH5()
-    red = Processing.histogram(obj.read_files("red.h5","8"))
-    blue =  Processing.histogram(obj.read_files("blue.h5","8"))
-    green =  Processing.histogram(obj.read_files("green.h5","8"))
-    white  = Processing.histogram(obj.read_files("White.h5","8"))
-    dark = Processing.histogram(obj.read_files("dark.h5","8"))
+    red = Processing.histogram(obj.read_files("red.h5","3"))
+    blue =  Processing.histogram(obj.read_files("blue.h5","3"))
+    green =  Processing.histogram(obj.read_files("green.h5","8"))   
     plt.plot(blue, label="Blue")
     plt.plot(red, label="Red")
     plt.plot(green, label="Green")
-    plt.plot(dark, label="Dark")
-    plt.plot(white, label="White")
     plt.xlabel("Pixel Intensity")
     plt.ylabel("Frequency")
     plt.legend()
@@ -26,6 +22,7 @@ def histogram_test():
 
 def image_reconstruction_test():
     """reconstruct colot i
+    
     
     mage from RGB image"""
     obj = ReadH5()
@@ -45,9 +42,20 @@ def image_reconstruction_using_ratio():
     green =obj.read_files("green.h5","8")
     white  =obj.read_files("White.h5","8")
     Processing.ratio_method(white,blue,green,red)
+def image_reconstruction_using_white():
+    "Reconstructring the image using substraction method"
+    obj = ReadH5()
+    w = obj.read_files("white.h5","8")
+    rb = obj.read_files("rb.h5","8")
+    rg =obj.read_files("rg.h5","8")
+    bg = obj.read_files("bg.h5","8")
+    image = Processing.image_reconstruction_multi(w,rg,rb,bg)
+    return image
+ 
 def color_correction_test():
     "color correction test"
-    image_input = image_reconstruction_test()
+    image_input = image_reconstruction_using_white()
     image_target = cv2.imread("RGB.bmp")
     weight =Processing.get_color_correction_matrix(image_input,image_target,24)
     Processing.open_images(Processing.corrrect_color(image_input,weight))
+color_correction_test()

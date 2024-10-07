@@ -16,6 +16,7 @@ def cluster_on_off_test():
         for j in range(2):
             for k in range(2):
                 vect =[i,j,k]
+                print(vect)
                 obj.simulate_color(vect,5)
 cluster_on_off_test()
 

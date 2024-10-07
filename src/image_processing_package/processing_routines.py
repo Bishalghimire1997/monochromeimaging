@@ -40,6 +40,25 @@ class Processing():
         """
         return np.stack((image_blue,image_green,image_red),axis=-1)
     @staticmethod
+    def image_reconstruction_multi(image_white, image_rg,image_rb, image_bg):
+        """Generates the color image from the four imges
+
+        Args:
+            image_white (numpy array): image taken in the White light
+            image_rg (numpy array): image taken in red green light 
+            image_rb (numpy array): Image taken in red blue  light 
+            image_bg (numpy array): image taken in blue green light
+
+        Returns:
+            numyp array: Colored Images
+        """        
+        r= ((image_white-image_bg)*2).astype(np.uint8)
+        g= ((image_white- image_rb)*2).astype(np.uint8)
+        b= ((image_white - image_rg)*2).astype(np.uint8)
+        return Processing.image_reconstruction(b,g,r)
+
+        pass
+    @staticmethod
     def open_images( image):
         """displys the numpy array as image
         Args:
