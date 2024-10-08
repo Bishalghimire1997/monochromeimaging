@@ -21,10 +21,7 @@ def histogram_test():
     plt.show()
 
 def image_reconstruction_test():
-    """reconstruct colot i
-    
-    
-    mage from RGB image"""
+    """reconstruct color image from RGB image"""
     obj = ReadH5()
     red = obj.read_files("red.h5","8")
     blue = obj.read_files("blue.h5","8")
@@ -51,11 +48,26 @@ def image_reconstruction_using_white():
     bg = obj.read_files("bg.h5","8")
     image = Processing.image_reconstruction_multi(w,rg,rb,bg)
     return image
+def image_reconstruction_using_dark():
+    obj = ReadH5()
+    red = obj.read_files("red.h5","8")
+    blue = obj.read_files("blue.h5","8")
+    green =obj.read_files("green.h5","8")
+    dark  =obj.read_files("dark.h5","8")
+    return Processing.image_reconstruction_with_dark_image_refrecne(blue,green,red, dark)
  
 def color_correction_test():
     "color correction test"
-    image_input = image_reconstruction_test()
+    image_input = image_reconstruction_test ()
     image_target = cv2.imread("RGB.bmp")
-    weight =Processing.get_color_correction_matrix(image_input,image_target,24)
-    Processing.open_images(Processing.corrrect_color(image_input,weight))
-color_correction_test()
+    Processing.get_color_correction_matrix(image_input,image_target,24)
+def color_correction_apply_test(image_input):
+    obj = ReadH5()
+    weight = obj.read_files("weight.h5","0")
+    Processing.open_images(image_reconstruction_test())
+    Processing.open_images( Processing.corrrect_color(image_input,weight))
+    
+
+
+
+color_correction_apply_test( image_reconstruction_test())

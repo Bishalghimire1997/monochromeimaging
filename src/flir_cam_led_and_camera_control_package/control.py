@@ -24,6 +24,12 @@ class Sync():
         self._rg_capture()
         self._rb_capture()
         self._bg_capture()
+    def bl_rgb_sequence(self):
+        self._dark_capture()
+        self._red_capture()
+        self._blue_capture()
+        self._green_capture()
+
     
     def _white_capture(self):
         self._param.path = "white"
