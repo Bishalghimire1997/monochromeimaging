@@ -60,7 +60,16 @@ class Processing():
 
     @staticmethod
     def image_reconstruction_with_dark_image_refrecne(image_blue,image_green,image_red,image_dark):
+        """Reconstructs the color image by reducign the dark image frm the image taken at different color
+        Args:
+            image_blue (numpy array): image taken at blue light 
+            image_green (numpy array): image taken at green light 
+            image_red (numpy array): image taken at red light 
+            image_dark (numpy array): image taken with all LEDS off
 
+        Returns:
+            numpy array: colored image as a numpy array
+        """
         pure_red= Processing.image_substraction(image_red,image_dark)
         pure_blue = Processing.image_substraction(image_blue,image_dark)
         pure_green = Processing.image_substraction(image_green,image_dark)
@@ -113,7 +122,6 @@ class Processing():
         Returns:
             numpy array : Weights value 
         """
-        obj=H
         x, y, w, h = roi
         cropped_image = image[y:y+h, x:x+w]
         b_pixel = np.mean(cropped_image[:, :, 0])
