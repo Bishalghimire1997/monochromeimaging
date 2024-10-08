@@ -1,6 +1,7 @@
 """Class to process the image"""
 import cv2
 import numpy as np
+from h5_file_format_package.h5_format import H5Fromat
 
 class Processing():
     """class to process the image """    
@@ -12,6 +13,7 @@ class Processing():
             img1 (numpy array): _description_
             img2 (numpy array): _description_
         """
+        return img1-img2
     @staticmethod
     def image_averaging(image:list):
         """Computes the average of the images"""
@@ -39,6 +41,39 @@ class Processing():
             _type_: _description_
         """
         return np.stack((image_blue,image_green,image_red),axis=-1)
+    @staticmethod
+    def image_reconstruction_multi(image_white, image_rg,image_rb, image_bg):
+        """Generates the color image from the four imges
+        Args:
+            image_white (numpy array): image taken in the White light
+            image_rg (numpy array): image taken in red green light 
+            image_rb (numpy array): Image taken in red blue  light 
+            image_bg (numpy array): image taken in blue green light
+
+        Returns:
+            numyp array: Colored Images
+        """
+        r= ((image_white-image_bg)*2).astype(np.uint8)
+        g= ((image_white- image_rb)*2).astype(np.uint8)
+        b= ((image_white - image_rg)*2).astype(np.uint8)
+        return Processing.image_reconstruction(b,g,r)
+
+    @staticmethod
+    def image_reconstruction_with_dark_image_refrecne(image_blue,image_green,image_red,image_dark):
+        """Reconstructs the color image by reducign the dark image frm the image taken at different color
+        Args:
+            image_blue (numpy array): image taken at blue light 
+            image_green (numpy array): image taken at green light 
+            image_red (numpy array): image taken at red light 
+            image_dark (numpy array): image taken with all LEDS off
+
+        Returns:
+            numpy array: colored image as a numpy array
+        """
+        pure_red= Processing.image_substraction(image_red,image_dark)
+        pure_blue = Processing.image_substraction(image_blue,image_dark)
+        pure_green = Processing.image_substraction(image_green,image_dark)
+        return Processing.image_reconstruction(Processing.scale(pure_blue),Processing.scale(pure_green),Processing.scale(pure_red))
     @staticmethod
     def open_images( image):
         """displys the numpy array as image
@@ -96,6 +131,7 @@ class Processing():
         print(pixel_value)
         refrence = np.array([refrence_color])
         weight, _, _, _ = np.linalg.lstsq(pixel_value, refrence, rcond=None)
+
         return weight
     @staticmethod
     def fit(image, weight):
@@ -127,10 +163,11 @@ class Processing():
         Returns: Weights
             numpy array: 3*3 transformation matrix
         """
+        obj = H5Fromat("weight")
         target_matrix = Processing.__get_matrix(refrence_image,number_of_rois)
         input_matrix= Processing.__get_matrix(image_to_be_corrected,number_of_rois)
         weight= np.linalg.lstsq(input_matrix,target_matrix)
-        return weight[0]
+        obj.record_images(weight[0],0)
     @staticmethod
     def corrrect_color(image, weight):
         """corrects the color in the image WRT weight 
@@ -144,7 +181,7 @@ class Processing():
         """
         h, w, c = image.shape
         flattened_image = image.reshape(-1, 3)
-        transformed_image_flat = flattened_image @ weight.T
+        transformed_image_flat = flattened_image @ weight
         transformed_image_flat = np.clip(transformed_image_flat, 0, 255)
         transformed_image = transformed_image_flat.reshape(h, w, c)
         return transformed_image.astype(np.uint8)    

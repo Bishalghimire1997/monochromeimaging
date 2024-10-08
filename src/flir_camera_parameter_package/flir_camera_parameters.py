@@ -15,7 +15,7 @@ class FlirCamParam(Parameters):
         Initializes the FlirCamParam class with default values.
         """
         self._path:str = "test"
-        self._snap_count:int = 20
+        self._snap_count:int = 10
         self._trigger:bool = False
         self._default_shutter_time:bool =True
         self._shutter_time:int=5000
