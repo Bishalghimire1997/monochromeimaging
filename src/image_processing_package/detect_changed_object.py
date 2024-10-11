@@ -59,7 +59,7 @@ class DetectChanges():
                                    flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
         return img_matches
     
-    def get_mask(self)
+    def get_mask(self):
         return self.get_mask() 
     
 
