@@ -17,6 +17,8 @@ class Processing():
     @staticmethod
     def image_averaging(image:list):
         """Computes the average of the images"""
+        return np.mean(image,axis=0).astype(np.uint8)
+ 
     @staticmethod
     def histogram(image):
         """returns the histogram of the image
@@ -212,4 +214,7 @@ class Processing():
         g_pixel = np.mean(cropped_image[:, :, 1])
         r_pixel = np.mean(cropped_image[:, :, 2])
         return [b_pixel,g_pixel,r_pixel]
-    
+    @staticmethod 
+    def binarization(grey_image, threshold):
+      return np.where(grey_image>threshold,225,0).astype(np.uint8)
+        

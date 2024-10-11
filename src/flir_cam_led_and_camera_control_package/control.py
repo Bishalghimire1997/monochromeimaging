@@ -44,7 +44,8 @@ class Sync():
         
        
        
-    def _red_capture(self):
+    def red_capture(self):
+        """Captures the images in the red spectrum of light """
         self._param.path = "red"
         self._param.default_shutter_time = False
         self._param.shutter_time =30000
@@ -55,7 +56,8 @@ class Sync():
         camera.take_snapshot()
         thread1.join()
        
-    def _blue_capture(self):
+    def blue_capture(self):
+        """Capture the images in the blue spectrum of the light"""
         self._param.path="blue"
         self._param.default_shutter_time = False
         self._param.shutter_time = 30000
@@ -66,7 +68,8 @@ class Sync():
         camera.take_snapshot()
         thread1.join()
        
-    def _green_capture(self):
+    def green_capture(self):
+        """captures the images in the green spectrum of the light"""
         self._param.path="green"
         self._param.default_shutter_time = False
         self._param.shutter_time = 30000
