@@ -15,9 +15,9 @@ class Sync():
         self.delay = 5
     def rgb_sequence_capture(self):
         """chapture the images in sequencxe of Red Green and Blue"""
-        self._red_capture()
-        self._blue_capture()
-        self._green_capture()
+        self.red_capture()
+        self.blue_capture()
+        self.green_capture()
     def w_rg_rb_bg_sequence_capture(self):
         """captures the image in white, Red-Green, Red-Blue and Blue-Green sequence"""
         self._white_capture()
@@ -26,9 +26,9 @@ class Sync():
         self._bg_capture()
     def bl_rgb_sequence(self):
         self._dark_capture()
-        self._red_capture()
-        self._blue_capture()
-        self._green_capture()
+        self.red_capture()
+        self.blue_capture()
+        self.green_capture()
 
     
     def _white_capture(self):

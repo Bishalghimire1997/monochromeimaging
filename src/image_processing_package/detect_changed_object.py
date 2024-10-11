@@ -28,6 +28,7 @@ class DetectChanges():
             _type_: _description_
         """  
         diff = cv2.absdiff(self.ref_image,self.target_image)
+        
         _, mask = cv2.threshold(diff, 0, 255, cv2.THRESH_OTSU)
         kernel = np.ones((5,5), np.uint8)
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
@@ -37,7 +38,7 @@ class DetectChanges():
             if cv2.contourArea(contour) > 10: 
                 x, y, w, h = cv2.boundingRect(contour)
                 cv2.rectangle(dark_image, (x, y), (x + w, y + h), (255, 255, 255), -1) 
-        return mask
+        return dark_image
     
     def check_for_match(self):
         mask_blue_red = self.__generate_mask()
@@ -60,7 +61,7 @@ class DetectChanges():
         return img_matches
     
     def get_mask(self):
-        return self.get_mask() 
+        return self.__generate_mask()
     
 
 
