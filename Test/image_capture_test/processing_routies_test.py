@@ -68,27 +68,8 @@ def color_correction_apply_test(image_input):
     weight = obj.read_files("weight.h5","0")
     Processing.open_images(image_reconstruction_test())
     Processing.open_images( Processing.corrrect_color(image_input,weight))
+Processing.open_images(image_reconstruction_test())
 
-def noise_removal_test(image_input):
-
-    obj = ReadH5()
-    weight = obj.read_files("weight.h5","0")
-    Processing.open_images(image_reconstruction_test())
-    image_input= Processing.corrrect_color(image_input,weight)
-    Processing.open_images(image_input)
-    image_list= []
-
-    
-    for i in range (100):
-        temp_image = (image_input +int(np.clip(np.random.normal(0, 1), 1, 100))).astype(np.int8)
-        image_list.append(temp_image)
-
-    average = np.mean(image_list,axis=0)
-    average = np.clip(average, 0, 255).astype(np.uint8) 
-    Processing.open_images(average)
-
-#color_correction_apply_test( image_reconstruction_test())
-noise_removal_test(image_reconstruction_test())
 
 
 
