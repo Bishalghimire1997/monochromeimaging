@@ -7,7 +7,7 @@ def image_segmentation_test():
     red = obj.read_files("red.h5","8")
     blue = obj.read_files("blue.h5","8")
     green = obj.read_files("green.h5","8")
-    sam = sam_model_registry["vit_b"](checkpoint="C://Users//SIU856587710//Downloads")
+    sam = sam_model_registry["vit_b"](checkpoint="C://git//monochromeimaging")
     mask_generator = SamAutomaticMaskGenerator(sam)
     masks = mask_generator.generate(blue)
     Processing.open_images(masks[0])
