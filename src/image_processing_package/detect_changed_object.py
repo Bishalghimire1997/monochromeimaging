@@ -2,6 +2,7 @@
 import cv2
 import numpy as np
 import skimage as si
+from image_processing_package.processing_routines import Processing
 class DetectChanges():
     
     """_summary_
@@ -40,29 +41,44 @@ class DetectChanges():
         _, diff = si.metrics.structural_similarity(grayB, grayA, full=True)
         diff = (diff * 255).astype("uint8")
         thresh =  cv2.threshold(diff, 0, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
-        cv2.imshow("ref", grayA)
-        cv2.imshow("target",grayB)
-        cv2.waitKey(0)
+        
 
 
         return thresh
    
        
-      
+    
     
     def check_for_match(self):
         mask = self.generate_mask()
+        Processing.open_images(mask)
+        
         shift = cv2.SIFT_create()
         ref_image_key_points,ref_image_descriptor  = shift.detectAndCompute(self.ref_image,mask)
         target_image_key_points,target_image_discriptor = shift.detectAndCompute(self.target_image,mask)
         brute_force_object= cv2.BFMatcher()
         target_ref_matches =  brute_force_object.match(ref_image_descriptor,target_image_discriptor)
-        match_image = self.__show_matches(self.ref_image, ref_image_key_points, self.target_image, target_image_key_points, target_ref_matches[:])    
+        match_image = self.__show_matches(self.ref_image, ref_image_key_points, self.target_image, target_image_key_points, target_ref_matches[:]) 
+        Processing.open_images(match_image)             
         self.compute_homography(ref_image_key_points,target_image_key_points,target_ref_matches)
-        cv2.imshow("ref target match", match_image)  
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
 
+
+    def check_for_match_second(self):
+        shift = cv2.SIFT_create()
+        brute_force_object= cv2.BFMatcher()
+        roi_refrence = cv2.selectROI("Select ROI", self.ref_image, fromCenter=False, showCrosshair=True)
+        mask_refrence = self.generate_mask_from_roi(roi_refrence,self.ref_image)
+        roi_target = cv2.selectROI("Select ROI", self.target_image, fromCenter=False, showCrosshair=True)
+        mask_target = self.generate_mask_from_roi(roi_target,self.ref_image)
+        
+       
+        ref_image_key_points,ref_image_descriptor  = shift.detectAndCompute(self.ref_image,mask_refrence)
+        target_image_key_points,target_image_discriptor = shift.detectAndCompute(self.target_image,mask_target)
+        target_ref_matches =  brute_force_object.match(ref_image_descriptor,target_image_discriptor)
+        match_image = self.__show_matches(self.ref_image, ref_image_key_points, self.target_image, target_image_key_points, target_ref_matches[:])  
+        Processing.open_images(match_image)  
+        transformed= self.compute_homography(ref_image_key_points,target_image_key_points,target_ref_matches)
+        Processing.open_images(self.draw_rectangel(roi_refrence,transformed))
 
 
     
@@ -85,13 +101,17 @@ class DetectChanges():
         height, width = self.target_image.shape[:2]
 
         aligned_img_affine = cv2.warpAffine(self.target_image,affine_matrix[0], (width, height))
+        return aligned_img_affine
 
-       # self.crop(self.get_mask(),self.target_image,aligned_img_affine)
 
-        cv2.imshow("Affine Aligned Image", aligned_img_affine)
+    def generate_mask_from_roi(self,roi,refrence_image):
+        height, width= refrence_image.shape
+        mask = np.zeros((height, width), dtype=np.uint8)
+        x, y, w, h = roi
+        mask[y:y+h, x:x+w] = 255
+        return mask
 
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+
 
    
     def get_contour(self,image):
@@ -105,6 +125,12 @@ class DetectChanges():
             x, y, w, h = cv2.boundingRect(i)
             crops.append(image[y:y+h, x:x+w])
         return crops
+
+    def draw_rectangel(self,roi, image):   
+        x, y, w, h = roi    
+        mask_image = cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2) 
+        return mask_image
+
     def check_similarity(self,crops1:list,crops2:list):
         temp = []
         match= []
