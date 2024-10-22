@@ -45,7 +45,34 @@ class DetectChanges():
 
 
         return thresh
-   
+    
+    def allign(self,ref,target):
+        shift = cv2.SIFT_create()
+        ref_image_key_points,ref_image_descriptor  = shift.detectAndCompute(ref,None)
+        target_image_key_points,target_image_discriptor = shift.detectAndCompute(target,None)
+        brute_force_object= cv2.BFMatcher()
+        target_ref_matches =  brute_force_object.match(ref_image_descriptor,target_image_discriptor)
+        match_image = self.__show_matches(ref, ref_image_key_points, target, target_image_key_points, target_ref_matches[:]) 
+        Processing.open_images(match_image)             
+        return self.compute_homography_allign(ref,target,ref_image_key_points,target_image_key_points,target_ref_matches)
+
+    def compute_homography_allign(self,ref,target,input_keypoints,target_keypoints,matches):
+        input_points = []
+        target_points = []
+        for i in matches:
+            input_points.append(input_keypoints[i.queryIdx].pt)
+            target_points.append(target_keypoints[i.trainIdx].pt)
+        
+        input_points = np.array(input_points).reshape(-1,1,2)
+        target_points = np.array(target_points).reshape(-1,1,2)
+        affine_matrix  = cv2.estimateAffine2D(target_points, input_points)
+        print(affine_matrix)
+        height, width = target.shape[:2]
+
+        aligned_img_affine = cv2.warpAffine(target,affine_matrix[0], (width, height))
+        return aligned_img_affine
+
+
        
     
     

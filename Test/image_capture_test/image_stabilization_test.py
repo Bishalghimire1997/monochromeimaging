@@ -66,4 +66,18 @@ def draw_rectangel():
          mask_image = cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2) 
     Processing.open_images(mask_image)
 
-inaitial_analysis()
+def allignment_correction_test():
+    obj = ReadH5()
+    
+    blue = obj.read_files("image.h5","45")
+    green = obj.read_files("image.h5","46")
+    red = obj.read_files("image.h5","47")
+    Processing.open_images(Processing.image_reconstruction(blue,green,red))
+    
+    stable1 = DetectChanges(blue,red)
+    stable2 = DetectChanges(blue,green)
+    red=stable2.allign(blue,red)
+    green = stable1.allign(blue,green)
+    after = Processing.image_reconstruction(blue,green,red)
+    Processing.open_images(after)
+allignment_correction_test()

@@ -13,9 +13,18 @@ from flir_image_capture_package.camera_interface import CameraInterface
 from flir_camera_parameter_package.flir_camera_shutter_parameters import ShutterTimeControl
 from flir_camera_parameter_package .flir_camera_parameters import FlirCamParam
 from h5_file_format_package.h5_format import H5Fromat
+from flir_cam_led_and_camera_control_package.stateblue import StateBlue
+from flir_cam_led_and_camera_control_package.state_green import StateGreen
+from flir_cam_led_and_camera_control_package.state_red import StateRed
 class FlirCamera(CameraInterface):
     """A class to handle FLIR camera operations including taking snapshots and saving images."""
     def __init__(self,param:FlirCamParam):
+        self._b= StateBlue()
+        self._g= StateGreen()
+        self._r=StateRed()
+        self._b.set_next_state(self._g)
+        self._g.set_next_state(self._r)
+        self._r.set_next_state(self._b)
         self._param = param
         self._im_file = H5Fromat(param.path)
         self._system= PySpin.System.GetInstance()
@@ -36,10 +45,16 @@ class FlirCamera(CameraInterface):
         #processor = PySpin.ImageProcessor()
         #processor.SetColorProcessing(PySpin.SPINNAKER_COLOR_PROCESSING_ALGORITHM_EDGE_SENSING)
         self._cam.BeginAcquisition()
+        state= self._b
         for i in range(self._param.snap_count):
+            state.activate()
             image = self.capture(self._cam)
+            state.deactivate()
             if not image.IsIncomplete():
                 threading.Thread(target = self.save_h5, args = (image,i)).start()
+                state=state.get_next_state()
+            
+            
         self._cam.EndAcquisition()
         self._cam.DeInit()
         del self._cam

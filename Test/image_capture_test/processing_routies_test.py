@@ -23,9 +23,9 @@ def histogram_test():
 def image_reconstruction_test():
     """reconstruct color image from RGB image"""
     obj = ReadH5()
-    red = obj.read_files("red.h5","8")
-    blue = obj.read_files("blue.h5","8")
-    green =obj.read_files("green.h5","8")
+    red = obj.read_files("image.h5","150")
+    blue = obj.read_files("image.h5","151")
+    green =obj.read_files("image.h5","152")
     color_image = Processing.image_reconstruction(blue,green,red)
     print(len(color_image))
     print(np.shape(color_image))
@@ -51,9 +51,9 @@ def image_reconstruction_using_white():
 def image_reconstruction_using_dark():
     "constructs the image using the darrk image as the reference image"
     obj = ReadH5()
-    red = obj.read_files("red.h5","8")
-    blue = obj.read_files("blue.h5","8")
-    green =obj.read_files("green.h5","8")
+    blue = obj.read_files("test.h5","150")
+    green = obj.read_files("test.h5","151")
+    red =obj.read_files("tets.h5","152")
     dark  =obj.read_files("dark.h5","8")
     return Processing.image_reconstruction_with_dark_image_refrecne(blue,green,red, dark)
 def color_correction_test():
@@ -71,7 +71,7 @@ def color_correction_apply_test(image_input):
 Processing.open_images(image_reconstruction_test())
 
 
-
+Processing.open_images(image_reconstruction_test())
 
     
 
