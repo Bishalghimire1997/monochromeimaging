@@ -23,9 +23,9 @@ def histogram_test():
 def image_reconstruction_test():
     """reconstruct color image from RGB image"""
     obj = ReadH5()
-    red = obj.read_files("image.h5","150")
-    blue = obj.read_files("image.h5","151")
-    green =obj.read_files("image.h5","152")
+    red = obj.read_files("image.h5","48")
+    blue = obj.read_files("image.h5","49")
+    green =obj.read_files("image.h5","50")
     color_image = Processing.image_reconstruction(blue,green,red)
     print(len(color_image))
     print(np.shape(color_image))

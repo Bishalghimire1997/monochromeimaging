@@ -7,31 +7,16 @@ from image_processing_package.segment_everything import Segment_image
 
 def inaitial_analysis():
     obj = ReadH5()
-    red = obj.read_files("red.h5","8")
-    blue = obj.read_files("blue.h5","8")
-    green = obj.read_files("green.h5","8")
-    Processing.open_images(blue)
+    blue = obj.read_files("image.h5","45")
+    green = obj.read_files("image.h5","46")
+    red = obj.read_files("image.h5","47")
+    Processing.open_images(Processing.image_reconstruction(blue,green,red))
     obj = DetectChanges(blue,green)
+    obj1 = DetectChanges(blue,red)
    # Processing.open_images(obj.get_mask())
-    Processing.open_images(obj.check_for_match_second())
-
-def contour_detection_test():
-    obj = ReadH5()
-
-    blue = obj.read_files("blue.h5","8")
-    green = obj.read_files("green.h5","8")
-    dc  = DetectChanges(blue,green)
-    binary_mask = dc.generate_mask()
-    Processing.open_images(binary_mask)
-    contour_list = dc.get_contour(binary_mask)
-    crop_refrence = dc.crop_to_contour(contour_list,blue)
-    crop_target =  dc.crop_to_contour(contour_list,green)
-    print(len(crop_refrence))
-    print(len(crop_target))
-    for i in range(len(crop_refrence)):
-        Processing.open_images(crop_refrence[i])
-        Processing.open_images(crop_target[i])
-    matches = dc.check_similarity(crop_refrence,crop_target)
+    green = obj.check_for_match_second()
+    red= obj1.check_for_match_second()
+    Processing.open_images(Processing.image_reconstruction(blue,green,red))
 
 
 
@@ -65,19 +50,4 @@ def draw_rectangel():
          x, y, w, h =i
          mask_image = cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2) 
     Processing.open_images(mask_image)
-
-def allignment_correction_test():
-    obj = ReadH5()
-    
-    blue = obj.read_files("image.h5","45")
-    green = obj.read_files("image.h5","46")
-    red = obj.read_files("image.h5","47")
-    Processing.open_images(Processing.image_reconstruction(blue,green,red))
-    
-    stable1 = DetectChanges(blue,red)
-    stable2 = DetectChanges(blue,green)
-    red=stable2.allign(blue,red)
-    green = stable1.allign(blue,green)
-    after = Processing.image_reconstruction(blue,green,red)
-    Processing.open_images(after)
-allignment_correction_test()
+inaitial_analysis()
