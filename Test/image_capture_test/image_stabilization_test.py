@@ -19,8 +19,6 @@ def inaitial_analysis():
     Processing.open_images(Processing.image_reconstruction(blue,green,red),"after transformation ")
 
 
-
-
 def segment_anything_impl_test():
     obj = ReadH5()
     blue = obj.read_files("blue.h5","8")
@@ -35,12 +33,8 @@ def segment_anything_impl_test():
          binary_mask = cv2.rectangle(binary_mask, (x, y), (x + w, y + h), (0, 255, 0), 2) 
     Processing.open_images(binary_mask,"Mask")
 
-
-
 def draw_rectangel():
     obj = ReadH5()
-
-
     blue = obj.read_files("blue.h5","8")
     green = obj.read_files("green.h5","8")
     dc  = DetectChanges()
@@ -55,17 +49,15 @@ def draw_rectangel():
     
 def detect_from_crop():
     obj = ReadH5()
+    for_crop = obj.read_files("image.h5","35")
     blue = obj.read_files("image.h5","45")
     green = obj.read_files("image.h5","46")
     red = obj.read_files("image.h5","47")
     obj1 = DetectChanges()
     obj2 = DetectChanges()
-    _,crop = obj1.select_and_crop_roi(blue)
+    roi,crop = obj1.select_and_crop_roi(for_crop)
+    
     Processing.open_images(crop,"Crop")
-    green = obj1.Serch_crop_object_in_images(crop,green,blue)
-    red= obj2.Serch_crop_object_in_images(crop,red,blue)
-    Processing.open_images(Processing.image_reconstruction(blue,green,red),"Colored Image")
+    green = obj1.Serch_crop_object_in_images_modified(roi, crop,green,blue)
 
-inaitial_analysis()
-
-
+detect_from_crop()

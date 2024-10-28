@@ -29,7 +29,7 @@ class DetectChanges():
         return thresh
     @staticmethod
     def update_matches(target_ref_matches):
-        n=60
+        n=20
         sorted_matches = sorted(target_ref_matches, key=lambda x: x.distance)
         n = min(n, len(sorted_matches))
         target_ref_matches = sorted_matches[:n]
@@ -54,7 +54,7 @@ class DetectChanges():
                                    flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
         return img_matches
     @staticmethod
-    def compute_homography(target_image,input_keypoints,target_keypoints,matches):
+    def compute_homography(input_image,input_keypoints,target_keypoints,matches):
         input_points = []
         target_points = []
         for i in matches:
@@ -65,9 +65,9 @@ class DetectChanges():
         target_points = np.array(target_points).reshape(-1,1,2)
         affine_matrix  = cv2.estimateAffine2D(target_points, input_points)
         print(affine_matrix)
-        height, width = target_image.shape[:2]
+        height, width = input_image.shape[:2]
 
-        aligned_img_affine = cv2.warpAffine(target_image,affine_matrix[0], (width, height))
+        aligned_img_affine = cv2.warpAffine(input_image,affine_matrix[0], (width, height))
         return aligned_img_affine
 
     @staticmethod
@@ -92,6 +92,8 @@ class DetectChanges():
         Processing.open_images(match_image,"match")
         transformed= DetectChanges.compute_homography(input_image,input_image_key_points,cropped_image_key_points,input_crop_matches)
         Processing.open_images(transformed,"Input_crop")
+        transformed= DetectChanges.compute_homography(transformed,input_image_key_points,target_image_key_points,target_crop_matches)
+        Processing.open_images(transformed,"Crop_target")
         return transformed
     @staticmethod
     def compute_homography_crop(image,input_keypoints,target_keypoints,matches):
@@ -117,3 +119,55 @@ class DetectChanges():
       output_image = np.zeros_like(image)
       output_image[y:y+h, x:x+w] = cropped_roi
       return roi, output_image
+    
+    @staticmethod
+    def Serch_crop_object_in_images_modified(roi, cropped_images, input_image, target_image):        
+        sift = cv2.SIFT_create()
+        bf_matcher = cv2.BFMatcher()
+        
+        # Detect and compute features for cropped image, input image, and target image
+        cropped_keypoints, cropped_descriptors = sift.detectAndCompute(cropped_images, None)
+        input_keypoints, input_descriptors = sift.detectAndCompute(input_image, None)
+        target_keypoints, target_descriptors = sift.detectAndCompute(target_image, None)
+        input_matches = bf_matcher.match(input_descriptors, cropped_descriptors)
+        target_matches = bf_matcher.match(target_descriptors, cropped_descriptors)
+        input_matches = sorted(input_matches, key=lambda x: x.distance)[:]  # Top 20 matches
+        target_matches = sorted(target_matches, key=lambda x: x.distance)[:]  # Top 20 matches
+
+        for i in range(min()):
+            print(i.queryIdx)
+        
+        
+        return 1
+
+
+        
+
+
+
+
+
+def draw_rectangle_on_roi(image, roi, color=(0, 255, 0), thickness=2):
+    """
+    Draws a rectangle on the specified Region of Interest (ROI) in the given image.
+    
+    Args:
+        image (numpy array): The image on which to draw the rectangle.
+        roi (tuple): A tuple (x, y, w, h) specifying the top-left corner (x, y),
+                     width (w), and height (h) of the rectangle.
+        color (tuple): Color of the rectangle in BGR format. Default is green.
+        thickness (int): Thickness of the rectangle border. Default is 2.
+        
+    Returns:
+        numpy array: The image with a rectangle drawn on the specified ROI.
+    """
+    # Create a copy of the image to avoid modifying the original
+    image_with_rectangle = image.copy()
+    
+    # Extract ROI coordinates
+    x, y, w, h = roi
+    
+    # Draw the rectangle
+    cv2.rectangle(image_with_rectangle, (x, y), (x + w, y + h), color, thickness)
+    
+    return image_with_rectangle
