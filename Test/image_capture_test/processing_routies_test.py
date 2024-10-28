@@ -51,9 +51,9 @@ def image_reconstruction_using_white():
 def image_reconstruction_using_dark():
     "constructs the image using the darrk image as the reference image"
     obj = ReadH5()
-    blue = obj.read_files("test.h5","150")
-    green = obj.read_files("test.h5","151")
-    red =obj.read_files("tets.h5","152")
+    blue = obj.read_files("test.h5","45")
+    green = obj.read_files("test.h5","46")
+    red =obj.read_files("tets.h5","47")
     dark  =obj.read_files("dark.h5","8")
     return Processing.image_reconstruction_with_dark_image_refrecne(blue,green,red, dark)
 def color_correction_test():
@@ -66,12 +66,9 @@ def color_correction_apply_test(image_input):
     "apply the color correction weight to the image"
     obj = ReadH5()
     weight = obj.read_files("weight.h5","0")
-    Processing.open_images(image_reconstruction_test())
-    Processing.open_images( Processing.corrrect_color(image_input,weight))
-Processing.open_images(image_reconstruction_test())
 
 
-Processing.open_images(image_reconstruction_test())
+Processing.open_images(image_reconstruction_test(),"reconstructed")
 
     
 

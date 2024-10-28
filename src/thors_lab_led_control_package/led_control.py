@@ -108,7 +108,7 @@ class LedControl():
         return list_cb_obj
       
     def turn_dedicated_off(self,list_cb_object):
-        self._turn_on(list_cb_object)
+        self._turn_off(list_cb_object)
 
         pass
 

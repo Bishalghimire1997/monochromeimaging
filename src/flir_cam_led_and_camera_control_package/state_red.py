@@ -5,6 +5,7 @@ class StateRed(StateInterface):
         self.__led = LedControl()
         self.__next_state = self 
         self.__cb_object = self.__led.turn_dedicated_on([0,0,0])
+        self.__cb_object_off = self.__led.turn_dedicated_on([0,0,0])
     def current_state(self):
         self.__led = LedControl()  
         return self

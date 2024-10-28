@@ -11,11 +11,11 @@ class SequenceControl():
         self._b.set_next_state(self._g)
         self._g.set_next_state(self._r)
         self._r.set_next_state(self._b)
+
     def activate(self):
         state= self._b
-        for i in range (100):
+        for i in range (102):
             print(i)
             state.activate()
-            state.deactivate()
             state = state.get_next_state()
         state.deactivate()

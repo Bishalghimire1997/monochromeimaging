@@ -49,12 +49,10 @@ class FlirCamera(CameraInterface):
         for i in range(self._param.snap_count):
             state.activate()
             image = self.capture(self._cam)
-            state.deactivate()
             if not image.IsIncomplete():
                 threading.Thread(target = self.save_h5, args = (image,i)).start()
                 state=state.get_next_state()
-            
-            
+        state.deactivate()           
         self._cam.EndAcquisition()
         self._cam.DeInit()
         del self._cam

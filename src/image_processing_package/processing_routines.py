@@ -77,12 +77,12 @@ class Processing():
         pure_green = Processing.image_substraction(image_green,image_dark)
         return Processing.image_reconstruction(Processing.scale(pure_blue),Processing.scale(pure_green),Processing.scale(pure_red))
     @staticmethod
-    def open_images( image):
+    def open_images( image,name:str):
         """displys the numpy array as image
         Args:
             image (np.Arrayterator): numpy array
         """
-        cv2.imshow("image",image)
+        cv2.imshow(name,image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
     @staticmethod
