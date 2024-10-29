@@ -29,24 +29,33 @@ class DetectChanges():
         return thresh
     @staticmethod
     def update_matches(target_ref_matches):
-        n=20
+        # First, apply the ratio test
+        match_number=10
+        ratio_threshold = 0.75
+        # good_matches = []
+        # for m, n in zip(target_ref_matches[:-1], target_ref_matches[1:]):
+        #     if m.distance < ratio_threshold * n.distance:
+        #         good_matches.append(m)
+        
         sorted_matches = sorted(target_ref_matches, key=lambda x: x.distance)
-        n = min(n, len(sorted_matches))
-        target_ref_matches = sorted_matches[:n]
-        return target_ref_matches
+        n = min(match_number, len(sorted_matches))
+        filtered_matches = sorted_matches[:n]
+        return filtered_matches
     @staticmethod
-    def check_for_match_second(input_image,target_image):
+    def check_for_match_second(roi,input_image,target_image):
         shift = cv2.SIFT_create()
         brute_force_object= cv2.BFMatcher()
-        roi_refrence = cv2.selectROI("Select ROI",input_image, fromCenter=False, showCrosshair=True)
-        mask_refrence = DetectChanges.generate_mask_from_roi(roi_refrence,input_image)
+       
+        mask_refrence = DetectChanges.generate_mask_from_roi(roi,input_image)
+        #mask_refrence = DetectChanges.generate_mask(input_image,target_image)
         input_image_key_points,input_image_descriptor  = shift.detectAndCompute(input_image,mask_refrence)
         target_image_key_points,target_image_discriptor = shift.detectAndCompute(target_image,None)
         target_ref_matches =  brute_force_object.match(input_image_descriptor,target_image_discriptor)
         target_ref_matches = DetectChanges.update_matches(target_ref_matches)
         match_image = DetectChanges.__show_matches(input_image, input_image_key_points, target_image, target_image_key_points, target_ref_matches[:])  
         Processing.open_images(match_image,"Match")  
-        transformed= DetectChanges.compute_homography(target_image,input_image_key_points,target_image_key_points,target_ref_matches)
+        transformatoion_matrix= DetectChanges.compute_homography(input_image_key_points,target_image_key_points,target_ref_matches)
+        transformed = DetectChanges.apply_afine(target_image,transformatoion_matrix[0])
         return transformed
     @staticmethod
     def __show_matches(input_image, keypoints_ref, target_image, keypoints_target, matches):
@@ -54,7 +63,7 @@ class DetectChanges():
                                    flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
         return img_matches
     @staticmethod
-    def compute_homography(input_image,input_keypoints,target_keypoints,matches):
+    def compute_homography(input_keypoints,target_keypoints,matches):
         input_points = []
         target_points = []
         for i in matches:
@@ -64,11 +73,7 @@ class DetectChanges():
         input_points = np.array(input_points).reshape(-1,1,2)
         target_points = np.array(target_points).reshape(-1,1,2)
         affine_matrix  = cv2.estimateAffine2D(target_points, input_points)
-        print(affine_matrix)
-        height, width = input_image.shape[:2]
-
-        aligned_img_affine = cv2.warpAffine(input_image,affine_matrix[0], (width, height))
-        return aligned_img_affine
+        return affine_matrix
 
     @staticmethod
     def generate_mask_from_roi(roi,refrence_image):
@@ -96,7 +101,7 @@ class DetectChanges():
         Processing.open_images(transformed,"Crop_target")
         return transformed
     @staticmethod
-    def compute_homography_crop(image,input_keypoints,target_keypoints,matches):
+    def compute_homography_crop(input_keypoints,target_keypoints,matches):
         input_points = []
         target_points = []
         for i in matches:
@@ -106,9 +111,18 @@ class DetectChanges():
         input_points = np.array(input_points).reshape(-1,1,2)
         target_points = np.array(target_points).reshape(-1,1,2)
         affine_matrix  = cv2.estimateAffine2D(target_points, input_points)
+        return affine_matrix
+    @staticmethod
+    def apply_afine(image,transformation_matrix):
         height, width = image.shape[:2]
-        aligned_img_affine = cv2.warpAffine(image,affine_matrix[0], (width, height))
+        aligned_img_affine = cv2.warpAffine(image,transformation_matrix, (width, height))
         return aligned_img_affine
+    @staticmethod
+    def unapply_affin(image, transformation_matrix):
+        height,width = image.shape[:2]
+        transformation_matrix = np.linalg.pinv(transformation_matrix).reshape(2,3)
+        allign_img_affine = cv2.warpAffine(image,transformation_matrix,(width,height))
+        return allign_img_affine
     @staticmethod                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
     def select_and_crop_roi(image):
       image_copy = image.copy()
@@ -131,43 +145,51 @@ class DetectChanges():
         target_keypoints, target_descriptors = sift.detectAndCompute(target_image, None)
         input_matches = bf_matcher.match(input_descriptors, cropped_descriptors)
         target_matches = bf_matcher.match(target_descriptors, cropped_descriptors)
-        input_matches = sorted(input_matches, key=lambda x: x.distance)[:]  # Top 20 matches
-        target_matches = sorted(target_matches, key=lambda x: x.distance)[:]  # Top 20 matches
+        input_matches = DetectChanges.update_matches(input_matches)
+        target_matches = DetectChanges.update_matches(target_matches)
+        match_image = DetectChanges.__show_matches(target_image, target_keypoints, cropped_images, cropped_keypoints, target_matches[:])
+        Processing.open_images(match_image,"Match")
+        input_points = []
+        target_points =[]
+        for i in range(min(len(input_matches),len(target_matches))):
+            input_points.append(input_keypoints[input_matches[i].queryIdx].pt)
+            target_points.append(target_keypoints[target_matches[i].queryIdx].pt)
+        input_points = np.array(input_points).reshape(-1,1,2)
+        target_points = np.array(target_points).reshape(-1,1,2)
+        affine_matrix  = cv2.estimateAffine2D(target_points, input_points)
+        transformed=  DetectChanges.apply_afine(input_image,affine_matrix[0])
+        Processing.open_images(transformed,"transformed")
+        return transformed   
 
-        for i in range(min()):
-            print(i.queryIdx)
         
-        
-        return 1
 
+    @staticmethod
+    def updateRoi(crop, first_image, second_image):
+        shift = cv2.SIFT_create()
+        brute_force_object= cv2.BFMatcher()
 
-        
+       
+        roi_image = crop
+        keypoints_roi, descriptors_roi = shift.detectAndCompute(roi_image, None)
+        keypoints_second, descriptors_second = shift.detectAndCompute(second_image, None)
+        matches = brute_force_object.match(descriptors_roi, descriptors_second)
+        matches = DetectChanges.update_matches(matches)
+        match_image = DetectChanges.__show_matches(roi_image,keypoints_roi, second_image, keypoints_second, matches[:])
+        Processing.open_images(match_image,"match")
 
+        points_roi = np.zeros((len(matches), 2), dtype=np.float32)
+        points_second = np.zeros((len(matches), 2), dtype=np.float32)
+        for i, match in enumerate(matches):
+            points_roi[i, :] = keypoints_roi[match.queryIdx].pt
+            points_second[i, :] = keypoints_second[match.trainIdx].pt
+        if len(matches) >= 4:  # Need at least 4 points to find a bounding box
+            x_min = int(np.min(points_second[:, 0]))
+            y_min = int(np.min(points_second[:, 1]))
+            x_max = int(np.max(points_second[:, 0]))
+            y_max = int(np.max(points_second[:, 1]))
 
+            updated_roi = (x_min, y_min, x_max - x_min, y_max - y_min)
+        else:
+            updated_roi = None
 
-
-
-def draw_rectangle_on_roi(image, roi, color=(0, 255, 0), thickness=2):
-    """
-    Draws a rectangle on the specified Region of Interest (ROI) in the given image.
-    
-    Args:
-        image (numpy array): The image on which to draw the rectangle.
-        roi (tuple): A tuple (x, y, w, h) specifying the top-left corner (x, y),
-                     width (w), and height (h) of the rectangle.
-        color (tuple): Color of the rectangle in BGR format. Default is green.
-        thickness (int): Thickness of the rectangle border. Default is 2.
-        
-    Returns:
-        numpy array: The image with a rectangle drawn on the specified ROI.
-    """
-    # Create a copy of the image to avoid modifying the original
-    image_with_rectangle = image.copy()
-    
-    # Extract ROI coordinates
-    x, y, w, h = roi
-    
-    # Draw the rectangle
-    cv2.rectangle(image_with_rectangle, (x, y), (x + w, y + h), color, thickness)
-    
-    return image_with_rectangle
+        return updated_roi
