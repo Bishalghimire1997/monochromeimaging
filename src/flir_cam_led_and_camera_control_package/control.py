@@ -15,9 +15,9 @@ class Sync():
         self.delay = 5
     def rgb_sequence_capture(self):
         """chapture the images in sequencxe of Red Green and Blue"""
-        self._red_capture()
-        self._blue_capture()
-        self._green_capture()
+        self.red_capture()
+        self.blue_capture()
+        self.green_capture()
     def w_rg_rb_bg_sequence_capture(self):
         """captures the image in white, Red-Green, Red-Blue and Blue-Green sequence"""
         self._white_capture()
@@ -26,9 +26,9 @@ class Sync():
         self._bg_capture()
     def bl_rgb_sequence(self):
         self._dark_capture()
-        self._red_capture()
-        self._blue_capture()
-        self._green_capture()
+        self.red_capture()
+        self.blue_capture()
+        self.green_capture()
 
     
     def _white_capture(self):
@@ -44,7 +44,8 @@ class Sync():
         
        
        
-    def _red_capture(self):
+    def red_capture(self):
+        """Captures the images in the red spectrum of light """
         self._param.path = "red"
         self._param.default_shutter_time = False
         self._param.shutter_time =30000
@@ -55,7 +56,8 @@ class Sync():
         camera.take_snapshot()
         thread1.join()
        
-    def _blue_capture(self):
+    def blue_capture(self):
+        """Capture the images in the blue spectrum of the light"""
         self._param.path="blue"
         self._param.default_shutter_time = False
         self._param.shutter_time = 30000
@@ -66,7 +68,8 @@ class Sync():
         camera.take_snapshot()
         thread1.join()
        
-    def _green_capture(self):
+    def green_capture(self):
+        """captures the images in the green spectrum of the light"""
         self._param.path="green"
         self._param.default_shutter_time = False
         self._param.shutter_time = 30000

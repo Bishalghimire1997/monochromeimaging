@@ -17,6 +17,8 @@ class Processing():
     @staticmethod
     def image_averaging(image:list):
         """Computes the average of the images"""
+        return np.mean(image,axis=0).astype(np.uint8)
+ 
     @staticmethod
     def histogram(image):
         """returns the histogram of the image
@@ -75,12 +77,12 @@ class Processing():
         pure_green = Processing.image_substraction(image_green,image_dark)
         return Processing.image_reconstruction(Processing.scale(pure_blue),Processing.scale(pure_green),Processing.scale(pure_red))
     @staticmethod
-    def open_images( image):
+    def open_images( image,name:str):
         """displys the numpy array as image
         Args:
             image (np.Arrayterator): numpy array
         """
-        cv2.imshow("image",image)
+        cv2.imshow(name,image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
     @staticmethod
@@ -212,4 +214,7 @@ class Processing():
         g_pixel = np.mean(cropped_image[:, :, 1])
         r_pixel = np.mean(cropped_image[:, :, 2])
         return [b_pixel,g_pixel,r_pixel]
-    
+    @staticmethod 
+    def binarization(grey_image, threshold):
+      return np.where(grey_image>threshold,225,0).astype(np.uint8)
+        

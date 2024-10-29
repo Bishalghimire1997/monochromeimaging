@@ -23,9 +23,9 @@ def histogram_test():
 def image_reconstruction_test():
     """reconstruct color image from RGB image"""
     obj = ReadH5()
-    red = obj.read_files("red.h5","8")
-    blue = obj.read_files("blue.h5","8")
-    green =obj.read_files("green.h5","8")
+    red = obj.read_files("image.h5","48")
+    blue = obj.read_files("image.h5","49")
+    green =obj.read_files("image.h5","50")
     color_image = Processing.image_reconstruction(blue,green,red)
     print(len(color_image))
     print(np.shape(color_image))
@@ -51,9 +51,9 @@ def image_reconstruction_using_white():
 def image_reconstruction_using_dark():
     "constructs the image using the darrk image as the reference image"
     obj = ReadH5()
-    red = obj.read_files("red.h5","8")
-    blue = obj.read_files("blue.h5","8")
-    green =obj.read_files("green.h5","8")
+    blue = obj.read_files("test.h5","45")
+    green = obj.read_files("test.h5","46")
+    red =obj.read_files("tets.h5","47")
     dark  =obj.read_files("dark.h5","8")
     return Processing.image_reconstruction_with_dark_image_refrecne(blue,green,red, dark)
 def color_correction_test():
@@ -66,31 +66,9 @@ def color_correction_apply_test(image_input):
     "apply the color correction weight to the image"
     obj = ReadH5()
     weight = obj.read_files("weight.h5","0")
-    Processing.open_images(image_reconstruction_test())
-    Processing.open_images( Processing.corrrect_color(image_input,weight))
-
-def noise_removal_test(image_input):
-
-    obj = ReadH5()
-    weight = obj.read_files("weight.h5","0")
-    Processing.open_images(image_reconstruction_test())
-    image_input= Processing.corrrect_color(image_input,weight)
-    Processing.open_images(image_input)
-    image_list= []
-
-    
-    for i in range (100):
-        temp_image = (image_input +int(np.clip(np.random.normal(0, 1), 1, 100))).astype(np.int8)
-        image_list.append(temp_image)
-
-    average = np.mean(image_list,axis=0)
-    average = np.clip(average, 0, 255).astype(np.uint8) 
-    Processing.open_images(average)
-
-#color_correction_apply_test( image_reconstruction_test())
-noise_removal_test(image_reconstruction_test())
 
 
+Processing.open_images(image_reconstruction_test(),"reconstructed")
 
     
 

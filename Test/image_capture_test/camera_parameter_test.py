@@ -5,7 +5,7 @@ from flir_camera_parameter_package.flir_camera_parameters import FlirCamParam
 from flir_image_capture_package.flir_image_capture import FlirCamera
 
 param = FlirCamParam()
-param.snap_count = 10
+param.snap_count = 256
 def auto():
     """initializing the camera with default shutter value"""
     camera1 = FlirCamera(param)
@@ -15,7 +15,8 @@ def manual():
     Method for manual shutter value
     """
     param.default_shutter_time = False
-    param.shutter_time = 200
+    param.shutter_time = 150
     camera2 = FlirCamera(param)
     camera2.take_snapshot()
-manual()
+auto()
+

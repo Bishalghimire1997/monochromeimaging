@@ -19,4 +19,3 @@ def cluster_on_off_test():
                 print(vect)
                 obj.simulate_color(vect,5)
 cluster_on_off_test()
-

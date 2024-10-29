@@ -99,6 +99,20 @@ class LedControl():
         time.sleep(delay)
         self._turn_off(list_cb_obj)
 
+    def turn_dedicated_on(self,ratio:list):
+        list_cb_obj = []
+        for i in self._leds:
+            list_cb_obj.append(ConstantBrightness(i))
+        self._set_brightness(list_cb_obj,self._brightness_vect(ratio))
+        self._turn_on(list_cb_obj)
+        return list_cb_obj
+      
+    def turn_dedicated_off(self,list_cb_object):
+        self._turn_off(list_cb_object)
+
+        pass
+
+
     def _brightness_vect(self,ratio:list):
         br = []
         ratio_sum = sum(ratio)
@@ -111,4 +125,6 @@ class LedControl():
             br.append(self._cluster_brightness*i/ratio_sum)   
         print(br)
         return br
+    
+    
     
