@@ -15,18 +15,23 @@ def inaitial_analysis():
     obj1 = DetectChanges()
    # Processing.open_images(obj.get_mask())
     roi,crop = obj1.select_and_crop_roi(blue1)
-    green = obj.check_for_match_second(roi,blue1,green)
-    red= obj1.check_for_match_second(roi, blue1,red)
+    param=obj.check_for_match_second(roi,blue1,green)
+    green= obj.transform(green,param[0],param[1],param[4])
+
+    param= obj1.check_for_match_second(roi, blue1,red)
+    red= obj.transform(red,param[0],param[1],param[4])
     Processing.open_images(Processing.image_reconstruction(blue1,green,red),"after transformation ")
 
     blue2 = obj2.read_files("image.h5","48")
     green = obj2.read_files("image.h5","49")
     red = obj2.read_files("image.h5","50")
-    roi = DetectChanges.updateRoi(crop,blue1,blue2)
+    roi = DetectChanges.updateRoi(roi,blue1,blue2)
     print(roi)
-    green = obj.check_for_match_second(roi,blue1,green)
-    red= obj1.check_for_match_second(roi, blue1,red)
-    Processing.open_images(Processing.image_reconstruction(blue1,green,red),"after transformation ")
+    param=obj.check_for_match_second(roi,blue2,green)
+    green= obj.transform(green,param[0],param[1],param[4])
+    param= obj1.check_for_match_second(roi, blue2,red)
+    red= obj.transform(red,param[0],param[1],param[4])
+    Processing.open_images(Processing.image_reconstruction(blue2,green,red),"after transformation ")
 
 
 
