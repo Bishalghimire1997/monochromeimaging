@@ -1,9 +1,6 @@
-import numpy as np
-import cv2
 from h5_file_format_package.h5_format_read import ReadH5
 from image_processing_package.processing_routines import Processing
 from image_processing_package.detect_changed_object import DetectChanges 
-from image_processing_package.segment_everything import Segment_image
 
 def inaitial_analysis():
     obj2 = ReadH5()
@@ -33,52 +30,42 @@ def inaitial_analysis():
     red= obj.transform(red,param[0],param[1],param[4])
     Processing.open_images(Processing.image_reconstruction(blue2,green,red),"after transformation ")
 
+def loop():
+    read_imaegs = ReadH5()
+    track =DetectChanges()
+    blue = read_imaegs.read_files("image.h5","45")
+    blue_old = read_imaegs.read_files("image.h5","48")
+    roi,crop = track.select_and_crop_roi(blue)
+    x,y,w,h =roi
+    var=45
+    for i in range(50): 
+        b = str(var)
+        g = str(var+1)
+
+        r= str (var+2)
+        var=var+3
+        
+        blue = read_imaegs.read_files("image.h5",b)
+        if(i!=0):
+            print(roi)
+            _,y,_,_ =track.updateRoi(roi,blue_old,blue)
+            roi = x,y,w,h
+            print(roi)
+       
+       
+        
+        green = read_imaegs.read_files("image.h5",g)
+        red = read_imaegs.read_files("image.h5",r)
+
+        param=track.check_for_match_second(roi,blue,green)
+        green= track.transform(green,param[0],param[1],param[4])
+        param= track.check_for_match_second(roi, blue,red)
+        red= track.transform(red,param[0],param[1],param[4])
+        Processing.open_images(Processing.image_reconstruction(blue,green,red),"after transformation ")
+        blue_old=blue
 
 
+        
 
-def segment_anything_impl_test():
-    obj = ReadH5()
-    blue = obj.read_files("blue.h5","8")
-    green = obj.read_files("green.h5","8")
-    dc  = DetectChanges()
-    binary_mask = dc.generate_mask(blue,green)
-    maskobj = Segment_image()
-    mask_rectangle = maskobj.image_segmentation_test(binary_mask)
-    print(mask_rectangle)
-    for i in mask_rectangle:
-         x, y, w, h =i
-         binary_mask = cv2.rectangle(binary_mask, (x, y), (x + w, y + h), (0, 255, 0), 2) 
-    Processing.open_images(binary_mask,"Mask")
 
-def draw_rectangel():
-    obj = ReadH5()
-    blue = obj.read_files("blue.h5","8")
-    green = obj.read_files("green.h5","8")
-    dc  = DetectChanges()
-    image = dc.generate_mask(blue,green)
-    image= cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-    mask_image = 0
-    mask= [[0, 0, 2447, 2044], [1063, 1169, 228, 345]]
-    for i in mask:
-         x, y, w, h =i
-         mask_image = cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2) 
-    Processing.open_images(mask_image, "Mask")
-    
-
-def detect_from_crop():
-    obj = ReadH5()
-    for_crop = obj.read_files("image.h5","40")
-    blue = obj.read_files("image.h5","45")
-    green = obj.read_files("image.h5","46")
-    red = obj.read_files("image.h5","47")
-    obj1 = DetectChanges()
-    obj2 = DetectChanges()
-    roi,crop = obj1.select_and_crop_roi(for_crop)
-    
-
-    Processing.open_images(crop,"Crop")
-    green = obj1.Serch_crop_object_in_images_modified(roi, crop,green,blue)
-    red=    obj2.Serch_crop_object_in_images_modified(roi, crop,red,blue)
-    rec=Processing.image_reconstruction(blue,green,red)
-    Processing.open_images(rec,"transformed")
-inaitial_analysis()
+loop()
