@@ -56,19 +56,3 @@ def image_reconstruction_using_dark():
     red =obj.read_files("tets.h5","47")
     dark  =obj.read_files("dark.h5","8")
     return Processing.image_reconstruction_with_dark_image_refrecne(blue,green,red, dark)
-def color_correction_test():
-    "color correction test"
-    image_input = image_reconstruction_test ()
-    image_target = cv2.imread("RGB.bmp")
-    Processing.get_color_correction_matrix(image_input,image_target,24)
-def color_correction_apply_test(image_input):
-
-    "apply the color correction weight to the image"
-    obj = ReadH5()
-    weight = obj.read_files("weight.h5","0")
-
-
-Processing.open_images(image_reconstruction_test(),"reconstructed")
-
-    
-

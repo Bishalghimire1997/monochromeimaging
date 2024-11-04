@@ -1,9 +1,9 @@
 import cv2
-import math
 from image_processing_package.tracking import Track
+from image_processing_package.detect_changed_object import DetectChanges
 from image_processing_package.processing_routines import Processing
 from h5_file_format_package.h5_format_read import ReadH5
-from image_processing_package.detect_changed_object import DetectChanges
+
 class TrackerrImpl():
     def __init__(self):
         self.trackers_list = ['MIL','KCF','CSRT']
@@ -51,7 +51,7 @@ class TrackerrImpl():
         for idx in sorted_trackers:
             if success_list[idx]:  # If tracker succeeded
                 return roi_list[idx]        
-        return False
+        return []
     
     def draw_bounding_box(self,image, bbox, algorithm):
         """

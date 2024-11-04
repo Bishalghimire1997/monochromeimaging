@@ -14,8 +14,7 @@ def inaitial_analysis():
     Processing.open_images(Processing.image_reconstruction(blue1,green,red),'reconstrucrted')
     obj = DetectChanges()
     obj1 = DetectChanges()
-   # Processing.open_images(obj.get_mask())
-    roi,crop = obj1.select_and_crop_roi(blue1)
+    roi,_= obj1.select_and_crop_roi(blue1)
     param=obj.check_for_match_second(roi,blue1,green)
     green= obj.transform(green,param[0],param[1],param[4])
 
@@ -33,28 +32,23 @@ def inaitial_analysis():
     param= obj1.check_for_match_second(roi, blue2,red)
     red= obj.transform(red,param[0],param[1],param[4])
     Processing.open_images(Processing.image_reconstruction(blue2,green,red),"after transformation ")
-    
-
 def loop():
     read_imaegs = ReadH5()
     saveblue= H5Fromat("blue")
     savegreen = H5Fromat("green")
     savered = H5Fromat("red")
-    saveROI = H5Fromat("ROI")
+    save_roi = H5Fromat("ROI")
     var=60
-
     dec_ch = DetectChanges
     blue = read_imaegs.read_files("image.h5",str(var))
-    roi,crop = dec_ch.select_and_crop_roi(blue)
+    roi,_ = dec_ch.select_and_crop_roi(blue)
     tr=Track("CSRT")
     tr.start_tracking(blue,roi)
-    
-
-    for i in range(300): 
+    for i in range(300):
         b = str(var)
         g = str(var+1)
         r= str (var+2)
-        var=var+3         
+        var=var+3     
         green = read_imaegs.read_files("image.h5",g)
         red = read_imaegs.read_files("image.h5",r)
         blue = read_imaegs.read_files("image.h5",b)    
@@ -63,7 +57,6 @@ def loop():
             _,roi = tr.update_tracking(green)
             _,roi = tr.update_tracking(red)
             print(roi)
-
         param=dec_ch.check_for_match_second(roi,blue,green)
         green= dec_ch.transform(green,param[0],param[1],param[4])
         param= dec_ch.check_for_match_second(roi, blue,red)
@@ -71,11 +64,7 @@ def loop():
         saveblue.record_images(blue,str(i))
         savegreen.record_images(green,str(i))
         savered.record_images(red,str(i))
-        saveROI.record_images(roi,str(i))
-        blue_old=blue
-
-
-        
+        save_roi.record_images(roi,str(i))
 def play_images_as_video( fps=20.0):
     obj2 = ReadH5()
     imagesblue = []
@@ -100,7 +89,6 @@ def correct_background():
     blue_o=[]
     green_o=[]
     red_o=[]
-
     blue_t=[]
     green_t=[]
     red_t=[]
@@ -121,7 +109,4 @@ def correct_background():
         var=var+3
     print(roi[0])
     DetectChanges.reconstruct_background(blue_t,red_t,green_t,blue_o,green_o,red_o,roi)
-    
-
-
-play_images_as_video(25)
+    play_images_as_video(6)
