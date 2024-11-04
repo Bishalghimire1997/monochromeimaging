@@ -1,12 +1,16 @@
+import os
+import cv2
 from h5_file_format_package.h5_format_read import ReadH5
+from h5_file_format_package.h5_format import H5Fromat
 from image_processing_package.processing_routines import Processing
 from image_processing_package.detect_changed_object import DetectChanges 
+from image_processing_package.tracking import Track
 
 def inaitial_analysis():
     obj2 = ReadH5()
-    blue1 = obj2.read_files("image.h5","45")
-    green = obj2.read_files("image.h5","46")
-    red = obj2.read_files("image.h5","47")
+    blue1 = obj2.read_files("image.h5","60")
+    green = obj2.read_files("image.h5","61")
+    red = obj2.read_files("image.h5","62")
     Processing.open_images(Processing.image_reconstruction(blue1,green,red),'reconstrucrted')
     obj = DetectChanges()
     obj1 = DetectChanges()
@@ -19,9 +23,9 @@ def inaitial_analysis():
     red= obj.transform(red,param[0],param[1],param[4])
     Processing.open_images(Processing.image_reconstruction(blue1,green,red),"after transformation ")
 
-    blue2 = obj2.read_files("image.h5","48")
-    green = obj2.read_files("image.h5","49")
-    red = obj2.read_files("image.h5","50")
+    blue2 = obj2.read_files("image.h5","63")
+    green = obj2.read_files("image.h5","64")
+    red = obj2.read_files("image.h5","65")
     roi = DetectChanges.updateRoi(roi,blue1,blue2)
     print(roi)
     param=obj.check_for_match_second(roi,blue2,green)
@@ -29,43 +33,63 @@ def inaitial_analysis():
     param= obj1.check_for_match_second(roi, blue2,red)
     red= obj.transform(red,param[0],param[1],param[4])
     Processing.open_images(Processing.image_reconstruction(blue2,green,red),"after transformation ")
+    
 
 def loop():
     read_imaegs = ReadH5()
-    track =DetectChanges()
-    blue = read_imaegs.read_files("image.h5","45")
-    blue_old = read_imaegs.read_files("image.h5","48")
-    roi,crop = track.select_and_crop_roi(blue)
-    x,y,w,h =roi
-    var=45
+    saveblue= H5Fromat("blue")
+    savegreen = H5Fromat("green")
+    savered = H5Fromat("red")
+
+    dec_ch = DetectChanges
+    blue = read_imaegs.read_files("image.h5","60")
+    roi,crop = dec_ch.select_and_crop_roi(blue)
+    tr=Track("CSRT")
+    tr.start_tracking(blue,roi)
+    var=60
     for i in range(50): 
         b = str(var)
         g = str(var+1)
-
         r= str (var+2)
-        var=var+3
-        
-        blue = read_imaegs.read_files("image.h5",b)
-        if(i!=0):
-            print(roi)
-            _,y,_,_ =track.updateRoi(roi,blue_old,blue)
-            roi = x,y,w,h
-            print(roi)
-       
-       
-        
+        var=var+3        
+        blue = read_imaegs.read_files("image.h5",b)     
         green = read_imaegs.read_files("image.h5",g)
         red = read_imaegs.read_files("image.h5",r)
+        if i!= 0:
+            _,roi = tr.update_tracking(blue)
+            _,roi = tr.update_tracking(green)
+            _,roi = tr.update_tracking(red)
+            print(roi)
 
-        param=track.check_for_match_second(roi,blue,green)
-        green= track.transform(green,param[0],param[1],param[4])
-        param= track.check_for_match_second(roi, blue,red)
-        red= track.transform(red,param[0],param[1],param[4])
-        Processing.open_images(Processing.image_reconstruction(blue,green,red),"after transformation ")
+        param=dec_ch.check_for_match_second(roi,blue,green)
+        green= dec_ch.transform(green,param[0],param[1],param[4])
+        param= dec_ch.check_for_match_second(roi, blue,red)
+        red= dec_ch.transform(red,param[0],param[1],param[4])
+        saveblue.record_images(blue,str(i))
+        savegreen.record_images(green,str(i))
+        savered.record_images(red,str(i))
         blue_old=blue
 
 
         
+def play_images_as_video( fps=20.0):
+    obj2 = ReadH5()
+    imagesblue = []
+    imagegreen=[]
+    imagered=[]
+    imagetransformed=[]
+    for i in range(50):
+       imagesblue.append(obj2.read_files("blue.h5",str(i)))
+       imagegreen.append(obj2.read_files("green.h5",str(i)))
+       imagered.append(obj2.read_files("red.h5",str(i)))
+       imagetransformed.append(Processing.image_reconstruction(obj2.read_files("blue.h5",str(i)),obj2.read_files("green.h5",str(i)),obj2.read_files("red.h5",str(i))))
+    delay = int(1000 / fps)
 
+    for image in imagetransformed:
+        cv2.imshow('Image Stream', image)
+        if cv2.waitKey(delay) & 0xFF == ord('q'):
+            print("Playback interrupted.")
+            break
+    cv2.destroyAllWindows()
 
-loop()
+play_images_as_video(3)

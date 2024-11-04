@@ -30,27 +30,7 @@ class DetectChanges():
     @staticmethod
     def update_matches(target_ref_matches):
         # First, apply the ratio test
-        match_number=20
-        ratio_threshold = 0.75
-        # good_matches = []
-        # for m, n in zip(target_ref_matches[:-1], target_ref_matches[1:]):
-        #     if m.distance < ratio_threshold * n.distance:
-        #         good_matches.append(m)
-        
-        sorted_matches = sorted(target_ref_matches, key=lambda x: x.distance)
-        n = min(match_number, len(sorted_matches))
-        filtered_matches = sorted_matches[:n]
-        return filtered_matches
-    @staticmethod
-    def update_matches1(target_ref_matches):
-        # First, apply the ratio test
-        match_number=20
-        ratio_threshold = 0.75
-        good_matches = []
-        for m, n in zip(target_ref_matches[:-1], target_ref_matches[1:]):
-             if m.distance < ratio_threshold * n.distance:
-                 good_matches.append(m)
-        
+        match_number=20        
         sorted_matches = sorted(target_ref_matches, key=lambda x: x.distance)
         n = min(match_number, len(sorted_matches))
         filtered_matches = sorted_matches[:n]
@@ -103,7 +83,6 @@ class DetectChanges():
         target_points = np.array(target_points).reshape(-1,1,2)
         affine_matrix  = cv2.estimateAffine2D(target_points, input_points)
         return affine_matrix
-
     @staticmethod
     def generate_mask_from_roi(roi,refrence_image):
         height, width= refrence_image.shape
@@ -126,13 +105,11 @@ class DetectChanges():
       cropped_roi = image[y:y+h, x:x+w]
       output_image = np.zeros_like(image)
       output_image[y:y+h, x:x+w] = cropped_roi
-      return roi, output_image
-    
-
-        
+      return roi, output_image      
 
     @staticmethod
-    def updateRoi(roi, first_image, second_image):
+    def updateRoi(roi, second_image, first_image):
+       
        parameters=  DetectChanges.check_for_match_second(roi,first_image,second_image)
        mask = DetectChanges.generate_mask_from_roi(roi,first_image)
        mask= DetectChanges.transform(mask,parameters[0],parameters[1],parameters[4])
@@ -140,4 +117,10 @@ class DetectChanges():
        edges = cv2.Canny(blurred, 50, 150)
        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
        max_contour = max(contours, key=cv2.contourArea)
-       return cv2.boundingRect(max_contour)
+       x1, y1, w1, h1 = cv2.boundingRect(max_contour)
+       x, y, w, h = roi
+
+       w1= int((w*h/h1))
+       roi =  x1, y1, w1, h1
+       return roi 
+
