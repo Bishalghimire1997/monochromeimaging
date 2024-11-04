@@ -1,4 +1,3 @@
-
 import cv2
 from h5_file_format_package.h5_format_read import ReadH5
 from h5_file_format_package.h5_format import H5Fromat
@@ -73,10 +72,12 @@ def play_images_as_video( fps=20.0):
     imagered=[]
     imagetransformed=[]
     for i in range(175):
-       imagesblue.append(obj2.read_files("bcb.h5",str(i)))
-       imagegreen.append(obj2.read_files("bcg.h5",str(i)))
-       imagered.append(obj2.read_files("bcr.h5",str(i)))
-       imagetransformed.append(Processing.image_reconstruction(obj2.read_files("bcb.h5",str(i)),obj2.read_files("bcg.h5",str(i)),obj2.read_files("bcr.h5",str(i))))
+        imagesblue.append(obj2.read_files("bcb.h5",str(i)))
+        imagegreen.append(obj2.read_files("bcg.h5",str(i)))
+        imagered.append(obj2.read_files("bcr.h5",str(i)))
+        imagetransformed.append(Processing.image_reconstruction(obj2.read_files("bcb.h5",str(i)),
+                                                                obj2.read_files("bcg.h5",str(i)),
+                                                                obj2.read_files("bcr.h5",str(i))))
     delay = int(1000 / fps)
 
     for image in imagetransformed:
