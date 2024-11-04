@@ -153,7 +153,7 @@ class Processing():
             len(image), len(image[0]), 3)
         return transformed_image.astype(np.uint8)
     @staticmethod
-    def get_color_correction_matrix(image_to_be_corrected, refrence_image,number_of_rois:int):
+    def get_color_correction_matrix(image_to_be_corrected, refrence_image,number_of_rois:int,weight_name:str):
         """generates the weight that can transform the color-
           of imput image into the olor of refrence image
 
@@ -165,7 +165,7 @@ class Processing():
         Returns: Weights
             numpy array: 3*3 transformation matrix
         """
-        obj = H5Fromat("weight")
+        obj = H5Fromat(weight_name)
         target_matrix = Processing.__get_matrix(refrence_image,number_of_rois)
         input_matrix= Processing.__get_matrix(image_to_be_corrected,number_of_rois)
         weight= np.linalg.lstsq(input_matrix,target_matrix)

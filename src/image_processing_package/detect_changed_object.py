@@ -2,6 +2,7 @@
 import cv2
 import numpy as np
 import skimage as si
+from h5_file_format_package.h5_format import H5Fromat
 from image_processing_package.processing_routines import Processing
 class DetectChanges():
     @staticmethod
@@ -30,13 +31,7 @@ class DetectChanges():
     @staticmethod
     def update_matches(target_ref_matches):
         # First, apply the ratio test
-        match_number=10
-        ratio_threshold = 0.75
-        # good_matches = []
-        # for m, n in zip(target_ref_matches[:-1], target_ref_matches[1:]):
-        #     if m.distance < ratio_threshold * n.distance:
-        #         good_matches.append(m)
-        
+        match_number=20        
         sorted_matches = sorted(target_ref_matches, key=lambda x: x.distance)
         n = min(match_number, len(sorted_matches))
         filtered_matches = sorted_matches[:n]
@@ -52,10 +47,26 @@ class DetectChanges():
         target_image_key_points,target_image_discriptor = shift.detectAndCompute(target_image,None)
         target_ref_matches =  brute_force_object.match(input_image_descriptor,target_image_discriptor)
         target_ref_matches = DetectChanges.update_matches(target_ref_matches)
-        match_image = DetectChanges.__show_matches(input_image, input_image_key_points, target_image, target_image_key_points, target_ref_matches[:])  
-        Processing.open_images(match_image,"Match")  
+        return [input_image_key_points,target_image_key_points,input_image_descriptor,target_image_discriptor,target_ref_matches]
+    @staticmethod
+    def check_for_match_third(roi1,roi2,input_image,target_image):
+        shift = cv2.SIFT_create()
+        brute_force_object= cv2.BFMatcher()
+       
+        mask_refrence = DetectChanges.generate_mask_from_roi(roi1,input_image)
+        mask_target = DetectChanges.generate_mask_from_roi(roi2,target_image)
+        #mask_refrence = DetectChanges.generate_mask(input_image,target_image)
+        input_image_key_points,input_image_descriptor  = shift.detectAndCompute(input_image,mask_refrence)
+        target_image_key_points,target_image_discriptor = shift.detectAndCompute(target_image,mask_target)
+        target_ref_matches =  brute_force_object.match(input_image_descriptor,target_image_discriptor)
+        target_ref_matches = DetectChanges.update_matches(target_ref_matches)
+        return [input_image_key_points,target_image_key_points,input_image_descriptor,target_image_discriptor,target_ref_matches]
+    @staticmethod
+    def transform(input_image,input_image_key_points,target_image_key_points,target_ref_matches):
+       # match_image = DetectChanges.__show_matches(input_image, input_image_key_points, target_image, target_image_key_points, target_ref_matches[:])  
+        #Processing.open_images(match_image,"Match")  
         transformatoion_matrix= DetectChanges.compute_homography(input_image_key_points,target_image_key_points,target_ref_matches)
-        transformed = DetectChanges.apply_afine(target_image,transformatoion_matrix[0])
+        transformed = DetectChanges.apply_afine(input_image,transformatoion_matrix[0])
         return transformed
     @staticmethod
     def __show_matches(input_image, keypoints_ref, target_image, keypoints_target, matches):
@@ -67,14 +78,12 @@ class DetectChanges():
         input_points = []
         target_points = []
         for i in matches:
-            print(i)
             input_points.append(input_keypoints[i.queryIdx].pt)
             target_points.append(target_keypoints[i.trainIdx].pt)        
         input_points = np.array(input_points).reshape(-1,1,2)
         target_points = np.array(target_points).reshape(-1,1,2)
         affine_matrix  = cv2.estimateAffine2D(target_points, input_points)
         return affine_matrix
-
     @staticmethod
     def generate_mask_from_roi(roi,refrence_image):
         height, width= refrence_image.shape
@@ -83,46 +92,11 @@ class DetectChanges():
         mask[y:y+h, x:x+w] = 255
         return mask
     @staticmethod
-    def Serch_crop_object_in_images(cropped_images,input_image,target_image):
-        shift = cv2.SIFT_create()
-        brute_force_object= cv2.BFMatcher()
-        cropped_image_key_points,cropped_image_descriptor = shift.detectAndCompute(cropped_images,None)
-        input_image_key_points,input_image_descriptor  = shift.detectAndCompute(input_image,None)
-        target_image_key_points,target_image_discriptor = shift.detectAndCompute(target_image,None)
-        target_crop_matches =  brute_force_object.match(target_image_discriptor,cropped_image_descriptor)
-        input_crop_matches =  brute_force_object.match(input_image_descriptor,cropped_image_descriptor)
-        target_crop_matches = DetectChanges.update_matches(target_crop_matches)
-        input_crop_matches = DetectChanges.update_matches(input_crop_matches)
-        match_image = DetectChanges.__show_matches(target_image, target_image_key_points, cropped_images, cropped_image_key_points, target_crop_matches[:])
-        Processing.open_images(match_image,"match")
-        transformed= DetectChanges.compute_homography(input_image,input_image_key_points,cropped_image_key_points,input_crop_matches)
-        Processing.open_images(transformed,"Input_crop")
-        transformed= DetectChanges.compute_homography(transformed,input_image_key_points,target_image_key_points,target_crop_matches)
-        Processing.open_images(transformed,"Crop_target")
-        return transformed
-    @staticmethod
-    def compute_homography_crop(input_keypoints,target_keypoints,matches):
-        input_points = []
-        target_points = []
-        for i in matches:
-            print(i)
-            input_points.append(input_keypoints[i.queryIdx].pt)
-            target_points.append(target_keypoints[i.trainIdx].pt)        
-        input_points = np.array(input_points).reshape(-1,1,2)
-        target_points = np.array(target_points).reshape(-1,1,2)
-        affine_matrix  = cv2.estimateAffine2D(target_points, input_points)
-        return affine_matrix
-    @staticmethod
     def apply_afine(image,transformation_matrix):
         height, width = image.shape[:2]
         aligned_img_affine = cv2.warpAffine(image,transformation_matrix, (width, height))
         return aligned_img_affine
-    @staticmethod
-    def unapply_affin(image, transformation_matrix):
-        height,width = image.shape[:2]
-        transformation_matrix = np.linalg.pinv(transformation_matrix).reshape(2,3)
-        allign_img_affine = cv2.warpAffine(image,transformation_matrix,(width,height))
-        return allign_img_affine
+
     @staticmethod                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
     def select_and_crop_roi(image):
       image_copy = image.copy()
@@ -132,64 +106,80 @@ class DetectChanges():
       cropped_roi = image[y:y+h, x:x+w]
       output_image = np.zeros_like(image)
       output_image[y:y+h, x:x+w] = cropped_roi
-      return roi, output_image
-    
-    @staticmethod
-    def Serch_crop_object_in_images_modified(roi, cropped_images, input_image, target_image):        
-        sift = cv2.SIFT_create()
-        bf_matcher = cv2.BFMatcher()
-        
-        # Detect and compute features for cropped image, input image, and target image
-        cropped_keypoints, cropped_descriptors = sift.detectAndCompute(cropped_images, None)
-        input_keypoints, input_descriptors = sift.detectAndCompute(input_image, None)
-        target_keypoints, target_descriptors = sift.detectAndCompute(target_image, None)
-        input_matches = bf_matcher.match(input_descriptors, cropped_descriptors)
-        target_matches = bf_matcher.match(target_descriptors, cropped_descriptors)
-        input_matches = DetectChanges.update_matches(input_matches)
-        target_matches = DetectChanges.update_matches(target_matches)
-        match_image = DetectChanges.__show_matches(target_image, target_keypoints, cropped_images, cropped_keypoints, target_matches[:])
-        Processing.open_images(match_image,"Match")
-        input_points = []
-        target_points =[]
-        for i in range(min(len(input_matches),len(target_matches))):
-            input_points.append(input_keypoints[input_matches[i].queryIdx].pt)
-            target_points.append(target_keypoints[target_matches[i].queryIdx].pt)
-        input_points = np.array(input_points).reshape(-1,1,2)
-        target_points = np.array(target_points).reshape(-1,1,2)
-        affine_matrix  = cv2.estimateAffine2D(target_points, input_points)
-        transformed=  DetectChanges.apply_afine(input_image,affine_matrix[0])
-        Processing.open_images(transformed,"transformed")
-        return transformed   
-
-        
+      return roi, output_image      
 
     @staticmethod
-    def updateRoi(crop, first_image, second_image):
-        shift = cv2.SIFT_create()
-        brute_force_object= cv2.BFMatcher()
-
+    def updateRoi(roi, second_image, first_image):
        
-        roi_image = crop
-        keypoints_roi, descriptors_roi = shift.detectAndCompute(roi_image, None)
-        keypoints_second, descriptors_second = shift.detectAndCompute(second_image, None)
-        matches = brute_force_object.match(descriptors_roi, descriptors_second)
-        matches = DetectChanges.update_matches(matches)
-        match_image = DetectChanges.__show_matches(roi_image,keypoints_roi, second_image, keypoints_second, matches[:])
-        Processing.open_images(match_image,"match")
+       parameters=  DetectChanges.check_for_match_second(roi,first_image,second_image)
+       mask = DetectChanges.generate_mask_from_roi(roi,first_image)
+       mask= DetectChanges.transform(mask,parameters[0],parameters[1],parameters[4])
+       blurred = cv2.GaussianBlur(mask, (5, 5), 0)
+       edges = cv2.Canny(blurred, 50, 150)
+       contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+       max_contour = max(contours, key=cv2.contourArea)
+       x1, y1, w1, h1 = cv2.boundingRect(max_contour)
+       x, y, w, h = roi
 
-        points_roi = np.zeros((len(matches), 2), dtype=np.float32)
-        points_second = np.zeros((len(matches), 2), dtype=np.float32)
-        for i, match in enumerate(matches):
-            points_roi[i, :] = keypoints_roi[match.queryIdx].pt
-            points_second[i, :] = keypoints_second[match.trainIdx].pt
-        if len(matches) >= 4:  # Need at least 4 points to find a bounding box
-            x_min = int(np.min(points_second[:, 0]))
-            y_min = int(np.min(points_second[:, 1]))
-            x_max = int(np.max(points_second[:, 0]))
-            y_max = int(np.max(points_second[:, 1]))
+       w1= int((w*h/h1))
+       roi =  x1, y1, w1, h1
+       return roi 
+    @staticmethod
+    def reconstruct_background(blue_transformed: list, red_transformed: list, green_transformed: list,
+                               blue_original: list, red_original: list, green_original: list, roi: list):
+      blue = H5Fromat("bcb")
+      green = H5Fromat("bcg")
+      red = H5Fromat("bcr")
 
-            updated_roi = (x_min, y_min, x_max - x_min, y_max - y_min)
-        else:
-            updated_roi = None
 
-        return updated_roi
+      for i in range(len(blue_original)):
+         images= DetectChanges.stich_roi(blue_transformed[i],green_transformed[i],red_transformed[i],blue_original[i],
+                                  green_original[i],red_original[i],roi[i])
+         blue.record_images(images[0],str(i))
+         green.record_images(images[1],str(i))
+         red.record_images(images[2],str(i))
+
+         
+          
+          
+        
+
+      pass
+    @staticmethod
+    def stich_roi(blue_t,green_t,red_t,blue_o,green_o,red_o,roi):
+        b = DetectChanges.stitch_roi_into_grayscale_image(blue_o,blue_t,roi)
+        g = DetectChanges.stitch_roi_into_grayscale_image(green_o,green_t,roi)
+        r =DetectChanges.stitch_roi_into_grayscale_image(red_o,red_t,roi)
+        return b,g,r
+        
+    @staticmethod
+    def stitch_roi_into_grayscale_image(target_image: np.ndarray, source_image: np.ndarray, roi_coords: list):
+        """
+        Stitch an ROI from a source grayscale image into a target grayscale image.
+
+        :param source_image: The source grayscale image from which the ROI will be extracted.
+        :param target_image: The target grayscale image where the ROI will be stitched.
+        :param roi_coords: A list defining the ROI coordinates [x_min, y_min, x_max, y_max].
+        :return: A grayscale image with the ROI stitched from the source image."""   
+        # Extract ROI coordinates
+        x, y, w, h = roi_coords
+
+        print(roi_coords)
+
+        # Extract the ROI from the source image
+        roi = source_image[y:y+h, x:x+w]
+        #Processing.open_images(roi,"ROi")
+
+        # Ensure the ROI dimensions match the region in the target image
+        if roi.shape != target_image[y:y+h, x:x+w].shape:
+            raise ValueError("The ROI size doesn't match the target region size.")
+
+        # Stitch the ROI into the target image
+        target_image[y:y+h, x:x+w] = roi
+
+        return target_image
+
+        
+    
+
+

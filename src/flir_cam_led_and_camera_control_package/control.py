@@ -53,8 +53,9 @@ class Sync():
         red =[0,1,0]
         thread1 = threading.Thread(target= self._led.simulate_color,args=(red, self.delay ))
         thread1.start()
-        camera.take_snapshot()
+        camera.take_snapshot_single()
         thread1.join()
+
        
     def blue_capture(self):
         """Capture the images in the blue spectrum of the light"""
@@ -65,7 +66,7 @@ class Sync():
         blue =[1,0,0]
         thread1 = threading.Thread(target= self._led.simulate_color,args=(blue, self.delay ))
         thread1.start()
-        camera.take_snapshot()
+        camera.take_snapshot_single()
         thread1.join()
        
     def green_capture(self):
@@ -77,7 +78,7 @@ class Sync():
         green =[0,0,1]
         thread1 = threading.Thread(target= self._led.simulate_color,args=(green, self.delay ))
         thread1.start()
-        camera.take_snapshot()
+        camera.take_snapshot_single()
         thread1.join()
        
         
