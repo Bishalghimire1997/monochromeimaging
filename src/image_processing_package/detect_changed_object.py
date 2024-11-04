@@ -2,6 +2,7 @@
 import cv2
 import numpy as np
 import skimage as si
+from h5_file_format_package.h5_format import H5Fromat
 from image_processing_package.processing_routines import Processing
 class DetectChanges():
     @staticmethod
@@ -123,4 +124,62 @@ class DetectChanges():
        w1= int((w*h/h1))
        roi =  x1, y1, w1, h1
        return roi 
+    @staticmethod
+    def reconstruct_background(blue_transformed: list, red_transformed: list, green_transformed: list,
+                               blue_original: list, red_original: list, green_original: list, roi: list):
+      blue = H5Fromat("bcb")
+      green = H5Fromat("bcg")
+      red = H5Fromat("bcr")
+
+
+      for i in range(len(blue_original)):
+         images= DetectChanges.stich_roi(blue_transformed[i],green_transformed[i],red_transformed[i],blue_original[i],
+                                  green_original[i],red_original[i],roi[i])
+         blue.record_images(images[0],str(i))
+         green.record_images(images[1],str(i))
+         red.record_images(images[2],str(i))
+
+         
+          
+          
+        
+
+      pass
+    @staticmethod
+    def stich_roi(blue_t,green_t,red_t,blue_o,green_o,red_o,roi):
+        b = DetectChanges.stitch_roi_into_grayscale_image(blue_o,blue_t,roi)
+        g = DetectChanges.stitch_roi_into_grayscale_image(green_o,green_t,roi)
+        r =DetectChanges.stitch_roi_into_grayscale_image(red_o,red_t,roi)
+        return b,g,r
+        
+    @staticmethod
+    def stitch_roi_into_grayscale_image(target_image: np.ndarray, source_image: np.ndarray, roi_coords: list):
+        """
+        Stitch an ROI from a source grayscale image into a target grayscale image.
+
+        :param source_image: The source grayscale image from which the ROI will be extracted.
+        :param target_image: The target grayscale image where the ROI will be stitched.
+        :param roi_coords: A list defining the ROI coordinates [x_min, y_min, x_max, y_max].
+        :return: A grayscale image with the ROI stitched from the source image."""   
+        # Extract ROI coordinates
+        x, y, w, h = roi_coords
+
+        print(roi_coords)
+
+        # Extract the ROI from the source image
+        roi = source_image[y:y+h, x:x+w]
+        #Processing.open_images(roi,"ROi")
+
+        # Ensure the ROI dimensions match the region in the target image
+        if roi.shape != target_image[y:y+h, x:x+w].shape:
+            raise ValueError("The ROI size doesn't match the target region size.")
+
+        # Stitch the ROI into the target image
+        target_image[y:y+h, x:x+w] = roi
+
+        return target_image
+
+        
+    
+
 
