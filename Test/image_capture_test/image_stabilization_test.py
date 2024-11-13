@@ -104,7 +104,7 @@ def correct_background():
         r= str (var+2)
         blue_o.append(read_imaegs.read_files("image.h5",b))
         green_o.append(read_imaegs.read_files("image.h5",g))
-        red_o.append(read_imaegs.read_files("image.h5",r))  
+        red_o.append(read_imaegs.read_files("image.h5",r))
         blue_t.append(read_imaegs.read_files("blue.h5",str(i)))
         green_t.append(read_imaegs.read_files("green.h5",str(i)))
         red_t.append(read_imaegs.read_files("red.h5",str(i)))
@@ -112,4 +112,5 @@ def correct_background():
         var=var+3
     print(roi[0])
     DetectChanges.reconstruct_background(blue_t,red_t,green_t,blue_o,green_o,red_o,roi)
-play_images_as_video(6)
+play_images_as_video(1)
+

@@ -1,9 +1,7 @@
-"""Detects the object that moved in a two images"""
 import cv2
 import numpy as np
 import skimage as si
 from h5_file_format_package.h5_format import H5Fromat
-from image_processing_package.processing_routines import Processing
 class DetectChanges():
     @staticmethod
     def generate_mask(input_image,target_image):
@@ -31,7 +29,7 @@ class DetectChanges():
     @staticmethod
     def update_matches(target_ref_matches):
         # First, apply the ratio test
-        match_number=20        
+        match_number=20       
         sorted_matches = sorted(target_ref_matches, key=lambda x: x.distance)
         n = min(match_number, len(sorted_matches))
         filtered_matches = sorted_matches[:n]
@@ -139,12 +137,6 @@ class DetectChanges():
          green.record_images(images[1],str(i))
          red.record_images(images[2],str(i))
 
-         
-          
-          
-        
-
-      pass
     @staticmethod
     def stich_roi(blue_t,green_t,red_t,blue_o,green_o,red_o,roi):
         b = DetectChanges.stitch_roi_into_grayscale_image(blue_o,blue_t,roi)
@@ -161,25 +153,10 @@ class DetectChanges():
         :param target_image: The target grayscale image where the ROI will be stitched.
         :param roi_coords: A list defining the ROI coordinates [x_min, y_min, x_max, y_max].
         :return: A grayscale image with the ROI stitched from the source image."""   
-        # Extract ROI coordinates
         x, y, w, h = roi_coords
-
         print(roi_coords)
-
-        # Extract the ROI from the source image
         roi = source_image[y:y+h, x:x+w]
-        #Processing.open_images(roi,"ROi")
-
-        # Ensure the ROI dimensions match the region in the target image
         if roi.shape != target_image[y:y+h, x:x+w].shape:
             raise ValueError("The ROI size doesn't match the target region size.")
-
-        # Stitch the ROI into the target image
         target_image[y:y+h, x:x+w] = roi
-
         return target_image
-
-        
-    
-
-

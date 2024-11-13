@@ -19,4 +19,3 @@ def manual():
     camera2 = FlirCamera(param)
     camera2.take_snapshot()
 auto()
-

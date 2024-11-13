@@ -83,7 +83,6 @@ class LedControl():
         thread1.start()
         thread2.start()
         thread3.start()
-        
     def simulate_color(self,ratio:list, delay):
         """genere color for delay interval of time 
 
@@ -100,6 +99,14 @@ class LedControl():
         self._turn_off(list_cb_obj)
 
     def turn_dedicated_on(self,ratio:list):
+        """Turns the dedicated LED as defined by the list on
+
+        Args:
+            ratio (list): Brightness ration of corresponding LEDS
+
+        Returns:
+            _type_: List of constant brightness object
+        """        
         list_cb_obj = []
         for i in self._leds:
             list_cb_obj.append(ConstantBrightness(i))
@@ -108,7 +115,13 @@ class LedControl():
         return list_cb_obj
       
     def turn_dedicated_off(self,list_cb_object):
+        """Given a list a constant brightness object, it turns off the corresponding LEDS
+
+        Args:
+            list_cb_object (_type_): _description_
+        """        
         self._turn_off(list_cb_object)
+
 
         pass
 
