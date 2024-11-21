@@ -15,7 +15,7 @@ class StateGreen(StateInterface):
     
 
     def activate(self):
-        self.__cb_object = self.__led.turn_dedicated_on([0,1,0])
+        self.__cb_object = self.__led.turn_dedicated_on([0,0,1])
     def deactivate(self):
         self.__led.turn_dedicated_off(self.__cb_object_off)
         pass

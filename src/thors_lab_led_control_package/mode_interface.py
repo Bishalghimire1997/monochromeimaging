@@ -2,7 +2,6 @@ class CommonMethods():
     def __init__(self,instrument):
         self._instrument = instrument
         self._led_state:bool
-        pass
     def on(self):
         """turns the led on
         """
@@ -13,16 +12,6 @@ class CommonMethods():
         """
         self._led_state= self._instrument.write("OUTPut:STATe OFF")
         print(self._led_state)
-
-    # """ def audio_signal(self,activate:bool):
-    #     """activete/deacticate the warning signal
-    #     """
-    #     if activate:
-    #        self._beeper_state = self._instrument.write('SYSTem:BEEPer:STATe ON')
-    #     else:
-    #          self._beeper_state = self._instrument.write("SYSTem:BEEPer:STATe OFF")
-    #     print(self._beeper_state)
-    #     pass """
 
     def get_max_opetaing_voltage(self):
         """Query maximum LED forward voltage specified by the head’s onboard info memory
@@ -52,5 +41,3 @@ class CommonMethods():
     def set_mode(self,mode:str ):#define ENUMS fro Different MODE
         """Set the LED operating mode:"""
         self._instrument.write('SOURce:MODe '+mode)
-
-    

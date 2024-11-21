@@ -123,9 +123,6 @@ class LedControl():
         self._turn_off(list_cb_object)
 
 
-        pass
-
-
     def _brightness_vect(self,ratio:list):
         br = []
         ratio_sum = sum(ratio)

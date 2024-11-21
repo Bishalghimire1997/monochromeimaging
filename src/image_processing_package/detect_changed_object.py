@@ -27,9 +27,9 @@ class DetectChanges():
         thresh =  cv2.threshold(diff, 0, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
         return thresh
     @staticmethod
-    def update_matches(target_ref_matches):
+    def update_matches(target_ref_matches, match_number):
         # First, apply the ratio test
-        match_number=20       
+         
         sorted_matches = sorted(target_ref_matches, key=lambda x: x.distance)
         n = min(match_number, len(sorted_matches))
         filtered_matches = sorted_matches[:n]
@@ -44,7 +44,7 @@ class DetectChanges():
         input_image_key_points,input_image_descriptor  = shift.detectAndCompute(input_image,mask_refrence)
         target_image_key_points,target_image_discriptor = shift.detectAndCompute(target_image,None)
         target_ref_matches =  brute_force_object.match(input_image_descriptor,target_image_discriptor)
-        target_ref_matches = DetectChanges.update_matches(target_ref_matches)
+        target_ref_matches = DetectChanges.update_matches(target_ref_matches,20)
         return [input_image_key_points,target_image_key_points,input_image_descriptor,target_image_discriptor,target_ref_matches]
     @staticmethod
     def check_for_match_third(roi1,roi2,input_image,target_image):
@@ -57,15 +57,21 @@ class DetectChanges():
         input_image_key_points,input_image_descriptor  = shift.detectAndCompute(input_image,mask_refrence)
         target_image_key_points,target_image_discriptor = shift.detectAndCompute(target_image,mask_target)
         target_ref_matches =  brute_force_object.match(input_image_descriptor,target_image_discriptor)
-        target_ref_matches = DetectChanges.update_matches(target_ref_matches)
+        target_ref_matches = DetectChanges.update_matches(target_ref_matches,20)
         return [input_image_key_points,target_image_key_points,input_image_descriptor,target_image_discriptor,target_ref_matches]
     @staticmethod
     def transform(input_image,input_image_key_points,target_image_key_points,target_ref_matches):
        # match_image = DetectChanges.__show_matches(input_image, input_image_key_points, target_image, target_image_key_points, target_ref_matches[:])  
-        #Processing.open_images(match_image,"Match")  
+        #Processing.open_images(match_image,"Match") 
         transformatoion_matrix= DetectChanges.compute_homography(input_image_key_points,target_image_key_points,target_ref_matches)
         transformed = DetectChanges.apply_afine(input_image,transformatoion_matrix[0])
         return transformed
+    @staticmethod
+    def transform_pr(input_image,input_image_key_points,target_image_key_points,target_ref_matches):
+        transformatoion_matrix= DetectChanges.compute_prespective_shift_matrix(input_image_key_points,target_image_key_points,target_ref_matches)
+        transformed = DetectChanges.apply_prespective_transformation(input_image,transformatoion_matrix)
+        return transformed
+        
     @staticmethod
     def __show_matches(input_image, keypoints_ref, target_image, keypoints_target, matches):
         img_matches = cv2.drawMatches(input_image, keypoints_ref, target_image, keypoints_target, matches, None, 
@@ -83,6 +89,18 @@ class DetectChanges():
         affine_matrix  = cv2.estimateAffine2D(target_points, input_points)
         return affine_matrix
     @staticmethod
+    def compute_prespective_shift_matrix(input_keypoints,target_keypoints,matches):
+        input_points = []
+        target_points = []
+        matches= DetectChanges.update_matches(matches,4)
+        for i in matches:
+            input_points.append(input_keypoints[i.queryIdx].pt)
+            target_points.append(target_keypoints[i.trainIdx].pt)      
+        input_points = np.array(input_points).astype(np.float32)
+        target_points=  np.array(target_points).astype(np.float32)
+        mat = cv2.getPerspectiveTransform(target_points, input_points)      
+        return mat
+    @staticmethod
     def generate_mask_from_roi(roi,refrence_image):
         height, width= refrence_image.shape
         mask = np.zeros((height, width), dtype=np.uint8)
@@ -94,6 +112,14 @@ class DetectChanges():
         height, width = image.shape[:2]
         aligned_img_affine = cv2.warpAffine(image,transformation_matrix, (width, height))
         return aligned_img_affine
+
+    @staticmethod
+    def apply_prespective_transformation(input_image,transformatoion_matrix):
+         height, width = input_image.shape[:2]
+         transformed_image = cv2.warpPerspective(input_image,transformatoion_matrix,(width,height))
+         return transformed_image
+
+
 
     @staticmethod                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
     def select_and_crop_roi(image):

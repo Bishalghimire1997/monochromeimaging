@@ -76,6 +76,11 @@ class Processing():
         pure_blue = Processing.image_substraction(image_blue,image_dark)
         pure_green = Processing.image_substraction(image_green,image_dark)
         return Processing.image_reconstruction(Processing.scale(pure_blue),Processing.scale(pure_green),Processing.scale(pure_red))
+    
+    @staticmethod
+    def frame_reconstruction(file_name:str, starting_image_flag: str):
+        
+
     @staticmethod
     def open_images( image,name:str):
         """displys the numpy array as image

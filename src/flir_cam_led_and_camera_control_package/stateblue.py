@@ -14,7 +14,7 @@ class StateBlue(StateInterface):
     def get_next_state(self):
         return self.__next_state
     def activate(self):
-        self.__cb_object = self.__led.turn_dedicated_on([0,0,1])
+        self.__cb_object = self.__led.turn_dedicated_on([1,0,0])
     def deactivate(self):
         self.__led.turn_dedicated_off(self.__cb_object)
-        pass
+     

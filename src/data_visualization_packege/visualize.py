@@ -49,7 +49,7 @@ class Visualize():
         ax = fig.add_subplot(111, projection='3d')
 
         # Create a scatter plot
-        scatter = ax.scatter(r, g, b, c=np.stack([r, g, b], axis=1)/255.0, s=1, alpha=0.5)
+        ax.scatter(r, g, b, c=np.stack([r, g, b], axis=1)/255.0, s=1, alpha=0.5)
 
         # Set axis labels
         ax.set_xlabel("Red")

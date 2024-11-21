@@ -1,3 +1,6 @@
-from abc import ABC,abstractmethod
+""" interface to LED state impl
+"""
+from abc import ABC
 class StateInterface(ABC):
-    pass
+    """ interface to LED state impl
+    """
