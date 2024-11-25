@@ -1,6 +1,5 @@
 """test"""
 import numpy as np
-import cv2
 from matplotlib import pyplot as plt
 from h5_file_format_package.h5_format_read import ReadH5
 from image_processing_package.processing_routines import Processing
@@ -56,3 +55,16 @@ def image_reconstruction_using_dark():
     red =obj.read_files("tets.h5","47")
     dark  =obj.read_files("dark.h5","8")
     return Processing.image_reconstruction_with_dark_image_refrecne(blue,green,red, dark)
+def frame_reconstruction_test():
+    Processing.frame_reconstruction("image.h5","r",900)
+def twochannelimagetest():
+    obj = ReadH5()
+    
+    blue = obj.read_files("image.h5","909")
+    green =obj.read_files("image.h5","910")
+    red = obj.read_files("image.h5","911")
+    color_image = Processing.image_reconstruction(blue,green,red)
+    Processing.open_images(color_image,"Image")
+
+frame_reconstruction_test()
+

@@ -2,8 +2,6 @@
     """
 from thors_lab_led_control_package.led_control import LedControl
 obj = LedControl()
-
-
 #simulate sine wave 
 #obj.simulate_sine_at(0,90,180) #100 = blue, 001 = green, 010=print(obj.detect_led())
 

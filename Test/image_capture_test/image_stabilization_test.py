@@ -43,14 +43,14 @@ def loop():
     roi,_ = dec_ch.select_and_crop_roi(blue)
     tr=Track("CSRT")
     tr.start_tracking(blue,roi)
-    for i in range(300):
+    for i in range(600):
         b = str(var)
         g = str(var+1)
         r= str (var+2)
         var=var+3     
         green = read_imaegs.read_files("image.h5",g)
         red = read_imaegs.read_files("image.h5",r)
-        blue = read_imaegs.read_files("image.h5",b)    
+        blue = read_imaegs.read_files("image.h5",b)
         if i!= 0:
             _,roi = tr.update_tracking(blue)
             _,roi = tr.update_tracking(green)
@@ -67,17 +67,14 @@ def loop():
 def play_images_as_video( fps=20.0):
     """" Plays the corrected frams as a video"""
     obj2 = ReadH5()
-    imagesblue = []
-    imagegreen=[]
-    imagered=[]
     imagetransformed=[]
-    for i in range(175):
-        imagesblue.append(obj2.read_files("bcb.h5",str(i)))
-        imagegreen.append(obj2.read_files("bcg.h5",str(i)))
-        imagered.append(obj2.read_files("bcr.h5",str(i)))
-        imagetransformed.append(Processing.image_reconstruction(obj2.read_files("bcb.h5",str(i)),
-                                                                obj2.read_files("bcg.h5",str(i)),
-                                                                obj2.read_files("bcr.h5",str(i))))
+    for i in range(700):
+        b= obj2.read_files("Blue.h5",str(i))
+        g= obj2.read_files("Blue.h5",str(i+1))
+        r=obj2.read_files("Blue.h5",str(i+1))
+
+        imagetransformed.append(Processing.image_reconstruction(b,g,r))
+                                                                
     delay = int(1000 / fps)
 
     for image in imagetransformed:
@@ -97,8 +94,8 @@ def correct_background():
     red_t=[]
     roi= []
     read_imaegs = ReadH5()
-    var=60
-    for i in range(200): 
+    var=0
+    for i in range(300):
         b = str(var)
         g = str(var+1)
         r= str (var+2)
@@ -112,5 +109,4 @@ def correct_background():
         var=var+3
     print(roi[0])
     DetectChanges.reconstruct_background(blue_t,red_t,green_t,blue_o,green_o,red_o,roi)
-play_images_as_video(1)
-
+play_images_as_video(14)
