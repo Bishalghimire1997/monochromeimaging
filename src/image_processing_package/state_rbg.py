@@ -1,15 +1,14 @@
 import numpy as np
 from image_processing_package.frame_reconstriction_state_interface import FrameReconstructionInterface
-class StateBGB(FrameReconstructionInterface):
-    def __init__(self,image_list):
-        self._img = image_list
+class StateRBG(FrameReconstructionInterface):
+    def __init__(self):
         self._next_state = self
         
     def correct(self,arr):
-        """Method to correct RGB to BGR"""
+        """Method to correct RBG to BGR"""
         temp = []
-        temp.append(arr[2])
         temp.append(arr[1])
+        temp.append(arr[2])
         temp.append(arr[0])
         return temp
     def set_next_state(self,state):
@@ -33,5 +32,6 @@ class StateBGB(FrameReconstructionInterface):
             _type_: _description_
         """
         return self
+    
     
     

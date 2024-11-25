@@ -2,13 +2,16 @@
 import cv2
 import numpy as np
 from h5_file_format_package.h5_format import H5Fromat
+from image_processing_package.state_grb import StateGRB
+from image_processing_package.state_rbg import StateRBG
+from image_processing_package.state_bgr import StateBGR
+from h5_file_format_package.h5_format_read import ReadH5
 
 class Processing():
     """class to process the image """    
     @staticmethod
     def image_substraction(img1,img2):
         """Substracts two images
-
         Args:
             img1 (numpy array): _description_
             img2 (numpy array): _description_
@@ -22,10 +25,8 @@ class Processing():
     @staticmethod
     def histogram(image):
         """returns the histogram of the image
-
         Args:
             image (2D numpy array): _description_
-
         Returns:
             _type_: 1 d nupy array
         """
@@ -33,12 +34,10 @@ class Processing():
     @staticmethod
     def image_reconstruction(image_blue, image_green, image_red):
         """Creats one 3D matrix from three 2D matri
-
         Args:
             image_blue (numpy array): Image taken in the prescence of blue light
             image_green (numpy array): Image taken in the prescence of green light
             image_red (numpy array): Image taken in the prescence of Red light
-
         Returns:
             _type_: _description_
         """
@@ -51,7 +50,6 @@ class Processing():
             image_rg (numpy array): image taken in red green light 
             image_rb (numpy array): Image taken in red blue  light 
             image_bg (numpy array): image taken in blue green light
-
         Returns:
             numyp array: Colored Images
         """
@@ -68,7 +66,6 @@ class Processing():
             image_green (numpy array): image taken at green light 
             image_red (numpy array): image taken at red light 
             image_dark (numpy array): image taken with all LEDS off
-
         Returns:
             numpy array: colored image as a numpy array
         """
@@ -78,8 +75,55 @@ class Processing():
         return Processing.image_reconstruction(Processing.scale(pure_blue),Processing.scale(pure_green),Processing.scale(pure_red))
     
     @staticmethod
-    def frame_reconstruction(file_name:str, starting_image_flag: str):
+    def frame_reconstruction(file_name:str, starting_image_flag: str,total_image_captured:int):
+        state_bgr = StateBGR()
+        state_rbg=StateRBG()
+        state_grb =  StateGRB()
+        state_rbg.set_next_state(state_grb)
+        state_grb.set_next_state(state_bgr)
+        state_bgr.set_next_state(state_rbg)
         
+        current_state =state_bgr
+        image_read_obj= ReadH5()
+        image_write_blue = H5Fromat("Blue")
+        image_write_green = H5Fromat("Green")
+        image_write_red = H5Fromat("Red")
+
+        if (starting_image_flag =="b"):
+            current_state = state_bgr
+        elif(starting_image_flag == "g"):
+            current_state = state_grb
+        elif(starting_image_flag == "r"):
+            current_state = state_rbg
+        else :
+            raise Exception("The initial color not specified correctly, please make sure its either b,g or r")
+        temp_list = []
+        for i in range (total_image_captured):
+             print(i)
+             temp = i
+             
+             image_list = []
+             print(current_state)
+
+
+           
+             for j in range (3):
+                 if temp+2 < total_image_captured-1:                     
+                     image_list.append(image_read_obj.read_files(file_name,str(temp+j)))    
+                     temp_list.append(temp+j)         
+             if len(image_list)==3:
+                 corrected_image = current_state.correct(image_list)
+                 image_write_blue.record_images(corrected_image[0],str(i))
+                 image_write_green.record_images(corrected_image[1],str(i))
+                 image_write_red.record_images(corrected_image[2],str(i))
+                
+
+             current_state = current_state.get_next_state()
+             
+        print(temp_list)
+             
+                    
+      
 
     @staticmethod
     def open_images( image,name:str):
