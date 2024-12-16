@@ -76,19 +76,17 @@ class Processing():
     
     @staticmethod
     def frame_reconstruction(file_name:str, starting_image_flag: str,total_image_captured:int):
+        offset= 0
         state_bgr = StateBGR()
         state_rbg=StateRBG()
         state_grb =  StateGRB()
-        state_rbg.set_next_state(state_grb)
-        state_grb.set_next_state(state_bgr)
-        state_bgr.set_next_state(state_rbg)
+        state_rbg.set_next_state(state_bgr)
+        state_grb.set_next_state(state_rbg)
+        state_bgr.set_next_state(state_grb)
         
         current_state =state_bgr
         image_read_obj= ReadH5()
-        image_write_blue = H5Fromat("Blue")
-        image_write_green = H5Fromat("Green")
-        image_write_red = H5Fromat("Red")
-
+        image_write = H5Fromat("windowed_frame")
         if (starting_image_flag =="b"):
             current_state = state_bgr
         elif(starting_image_flag == "g"):
@@ -98,24 +96,24 @@ class Processing():
         else :
             raise Exception("The initial color not specified correctly, please make sure its either b,g or r")
         temp_list = []
-        for i in range (total_image_captured):
-             print(i)
-             temp = i
-             
+        for i in range (total_image_captured):   
+             var=i+offset       
              image_list = []
-             print(current_state)
+             temp=var      
 
 
-           
+             print("...............")
              for j in range (3):
                  if temp+2 < total_image_captured-1:                     
                      image_list.append(image_read_obj.read_files(file_name,str(temp+j)))    
-                     temp_list.append(temp+j)         
+
+                     print(temp+j)    
              if len(image_list)==3:
                  corrected_image = current_state.correct(image_list)
-                 image_write_blue.record_images(corrected_image[0],str(i))
-                 image_write_green.record_images(corrected_image[1],str(i))
-                 image_write_red.record_images(corrected_image[2],str(i))
+                 imt= Processing.image_reconstruction(corrected_image[0],corrected_image[1],corrected_image[2])
+                 #Processing.open_images(imt,"color")
+                 image_write.record_images(imt,str(i))
+                 
                 
 
              current_state = current_state.get_next_state()

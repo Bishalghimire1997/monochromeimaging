@@ -10,6 +10,7 @@ class StateRBG(FrameReconstructionInterface):
         temp.append(arr[1])
         temp.append(arr[2])
         temp.append(arr[0])
+        print("state RBG")  
         return temp
     def set_next_state(self,state):
         """_summary_

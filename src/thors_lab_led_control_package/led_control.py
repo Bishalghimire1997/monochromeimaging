@@ -126,7 +126,8 @@ class LedControl():
     def _brightness_vect(self,ratio:list):
         br = []
         ratio_sum = sum(ratio)
-        print(ratio_sum)
+        if ratio_sum ==1:
+
         if ratio_sum<1:
             for i in range(3):
                 br.append(0)
