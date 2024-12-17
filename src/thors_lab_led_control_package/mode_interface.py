@@ -6,12 +6,10 @@ class CommonMethods():
         """turns the led on
         """
         self._led_state=self._instrument.write("OUTPut:STATe ON")
-        print(self._led_state)
     def off(self):
         """turns the led off
         """
         self._led_state= self._instrument.write("OUTPut:STATe OFF")
-        print(self._led_state)
 
     def get_max_opetaing_voltage(self):
         """Query maximum LED forward voltage specified by the head’s onboard info memory

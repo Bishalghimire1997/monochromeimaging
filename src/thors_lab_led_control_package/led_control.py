@@ -124,18 +124,18 @@ class LedControl():
 
 
     def _brightness_vect(self,ratio:list):
-        br = []
-        ratio_sum = sum(ratio)
-        if ratio_sum ==1:
+        # br = []
+        # ratio_sum = sum(ratio)
+        # if ratio_sum ==1:            
+        #     br = [x * self._cluster_brightness for x in ratio]
 
-        if ratio_sum<1:
-            for i in range(3):
-                br.append(0)
-            return br
-        for i in ratio:
-            br.append(self._cluster_brightness*i/ratio_sum)   
-        print(br)
-        return br
+        # elif ratio_sum<1:
+        #     br = [x * 0 for x in ratio]
+        # else:
+        #     for i in ratio:
+        #         br.append(self._cluster_brightness*i/ratio_sum) 
+         
+        return   [x * self._cluster_brightness for x in ratio]
     
     
     
