@@ -18,7 +18,6 @@ def histogram_test():
     plt.ylabel("Frequency")
     plt.legend()
     plt.show()
-
 def image_reconstruction_test():
     """reconstruct color image from RGB image"""
     obj = ReadH5()
@@ -53,18 +52,16 @@ def image_reconstruction_using_dark():
     blue = obj.read_files("test.h5","45")
     green = obj.read_files("test.h5","46")
     red =obj.read_files("tets.h5","47")
-    dark  =obj.read_files("dark.h5","8")
+    dark  =obj.read_files("dark.h5","8")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
     return Processing.image_reconstruction_with_dark_image_refrecne(blue,green,red, dark)
 def frame_reconstruction_test():
-    Processing.frame_reconstruction("image.h5","r",900)
+    Processing.frame_reconstruction("image.h5","r",2800)
 def twochannelimagetest():
-    obj = ReadH5()
-    
+    obj = ReadH5()    
     blue = obj.read_files("image.h5","909")
     green =obj.read_files("image.h5","910")
     red = obj.read_files("image.h5","911")
     color_image = Processing.image_reconstruction(blue,green,red)
     Processing.open_images(color_image,"Image")
-
 frame_reconstruction_test()
 
