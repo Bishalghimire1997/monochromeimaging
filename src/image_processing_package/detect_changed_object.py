@@ -28,26 +28,47 @@ class DetectChanges():
         return thresh
     @staticmethod
     def update_matches(target_ref_matches, match_number):
-        # First, apply the ratio test
+        # First, apply the ratio test``
          
         sorted_matches = sorted(target_ref_matches, key=lambda x: x.distance)
         n = min(match_number, len(sorted_matches))
         filtered_matches = sorted_matches[:n]
         return filtered_matches
     @staticmethod
-    def check_for_match_second(roi,input_image,target_image):
-        shift = cv2.SIFT_create()
+    def check_for_match_second(input_image_descriptor,input_image_key_points,target_image_discriptor,target_image_key_points):
+        #shift = cv2.SIFT_create()
         brute_force_object= cv2.BFMatcher()
        
-        mask_refrence = DetectChanges.generate_mask_from_roi(roi,input_image)
+        #mask_refrence = DetectChanges.generate_mask_from_roi(roi,input_image)
         #mask_refrence = DetectChanges.generate_mask(input_image,target_image)
-        input_image_key_points,input_image_descriptor  = shift.detectAndCompute(input_image,mask_refrence)
-        target_image_key_points,target_image_discriptor = shift.detectAndCompute(target_image,None)
+        #input_image_key_points,input_image_descriptor  = shift.detectAndCompute(input_image,mask_refrence)
+        #target_image_key_points,target_image_discriptor = shift.detectAndCompute(target_image,None)
+
+        #input_image_key_points,input_image_descriptor  = DetectChanges.temp(input_image,roi)
+        #target_image_key_points,target_image_discriptor = DetectChanges.temp(input_image,roi=False)
         target_ref_matches =  brute_force_object.match(input_image_descriptor,target_image_discriptor)
         target_ref_matches = DetectChanges.update_matches(target_ref_matches,20)
         return [input_image_key_points,target_image_key_points,input_image_descriptor,target_image_discriptor,target_ref_matches]
     @staticmethod
-    def check_for_match_third(roi1,roi2,input_image,target_image):
+    def update_Keypoints(image,roi):
+        sobel_x = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)  # Horizontal edges
+        sobel_y = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=3)  # Vertical edges
+        sobel_combined = cv2.magnitude(sobel_x, sobel_y)
+        image = sobel_combined = np.uint8(255 * sobel_combined / np.max(sobel_combined))
+        shift = cv2.SIFT_create()
+        if not roi:
+            kp,b=shift.detectAndCompute(image,None)
+            keypoints_tuple = [(kp.pt[0], kp.pt[1], kp.size, kp.angle, kp.response, kp.octave, kp.class_id) for kp in kp]
+            return keypoints_tuple,b
+        else:
+            mask_refrence = DetectChanges.generate_mask_from_roi(roi,image)
+            kp,b=shift.detectAndCompute(image,mask_refrence)
+            keypoints_tuple = [(kp.pt[0], kp.pt[1], kp.size, kp.angle, kp.response, kp.octave, kp.class_id) for kp in kp]
+            return keypoints_tuple,b
+
+    @staticmethod
+    def check_for_match_third(roi1,roi2,input_image,target_image,roi):
+
         shift = cv2.SIFT_create()
         brute_force_object= cv2.BFMatcher()
        

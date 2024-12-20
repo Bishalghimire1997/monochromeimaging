@@ -86,7 +86,10 @@ class Processing():
         
         current_state =state_bgr
         image_read_obj= ReadH5()
-        image_write = H5Fromat("windowed_frame")
+        image_write = H5Fromat("blue")
+        image_write1 = H5Fromat("green")
+        image_write2 = H5Fromat("red")
+
         if (starting_image_flag =="b"):
             current_state = state_bgr
         elif(starting_image_flag == "g"):
@@ -95,30 +98,23 @@ class Processing():
             current_state = state_rbg
         else :
             raise Exception("The initial color not specified correctly, please make sure its either b,g or r")
-        temp_list = []
-        for i in range (total_image_captured):   
-             var=i+offset       
+        for i in range (total_image_captured):
+             var=i+offset
              image_list = []
-             temp=var      
-
-
-             print("...............")
+             temp=var
              for j in range (3):
                  if temp+2 < total_image_captured-1:                     
-                     image_list.append(image_read_obj.read_files(file_name,str(temp+j)))    
-
-                     print(temp+j)    
+                     image_list.append(image_read_obj.read_files(file_name,str(temp+j)))
              if len(image_list)==3:
                  corrected_image = current_state.correct(image_list)
-                 imt= Processing.image_reconstruction(corrected_image[0],corrected_image[1],corrected_image[2])
-                 #Processing.open_images(imt,"color")
-                 image_write.record_images(imt,str(i))
                  
-                
-
+                 
+                 #Processing.open_images(imt,"color")
+                 image_write.record_images(corrected_image[0],str(i))
+                 image_write1.record_images(corrected_image[1],str(i))
+                 image_write2.record_images(corrected_image[2],str(i))
              current_state = current_state.get_next_state()
-             
-        print(temp_list)
+
              
                     
       
