@@ -1,27 +1,32 @@
 """Class to process the image"""
 import cv2
 import numpy as np
+from h5_file_format_package.h5_format import H5Fromat
+from image_processing_package.state_grb import StateGRB
+from image_processing_package.state_rbg import StateRBG
+from image_processing_package.state_bgr import StateBGR
+from h5_file_format_package.h5_format_read import ReadH5
 
 class Processing():
     """class to process the image """    
     @staticmethod
     def image_substraction(img1,img2):
         """Substracts two images
-
         Args:
             img1 (numpy array): _description_
             img2 (numpy array): _description_
         """
+        return img1-img2
     @staticmethod
     def image_averaging(image:list):
         """Computes the average of the images"""
+        return np.mean(image,axis=0).astype(np.uint8)
+ 
     @staticmethod
     def histogram(image):
         """returns the histogram of the image
-
         Args:
             image (2D numpy array): _description_
-
         Returns:
             _type_: 1 d nupy array
         """
@@ -29,23 +34,98 @@ class Processing():
     @staticmethod
     def image_reconstruction(image_blue, image_green, image_red):
         """Creats one 3D matrix from three 2D matri
-
         Args:
             image_blue (numpy array): Image taken in the prescence of blue light
             image_green (numpy array): Image taken in the prescence of green light
             image_red (numpy array): Image taken in the prescence of Red light
-
         Returns:
             _type_: _description_
         """
         return np.stack((image_blue,image_green,image_red),axis=-1)
     @staticmethod
-    def open_images( image):
+    def image_reconstruction_multi(image_white, image_rg,image_rb, image_bg):
+        """Generates the color image from the four imges
+        Args:
+            image_white (numpy array): image taken in the White light
+            image_rg (numpy array): image taken in red green light 
+            image_rb (numpy array): Image taken in red blue  light 
+            image_bg (numpy array): image taken in blue green light
+        Returns:
+            numyp array: Colored Images
+        """
+        r= ((image_white-image_bg)*2).astype(np.uint8)
+        g= ((image_white- image_rb)*2).astype(np.uint8)
+        b= ((image_white - image_rg)*2).astype(np.uint8)
+        return Processing.image_reconstruction(b,g,r)
+
+    @staticmethod
+    def image_reconstruction_with_dark_image_refrecne(image_blue,image_green,image_red,image_dark):
+        """Reconstructs the color image by reducign the dark image frm the image taken at different color
+        Args:
+            image_blue (numpy array): image taken at blue light 
+            image_green (numpy array): image taken at green light 
+            image_red (numpy array): image taken at red light 
+            image_dark (numpy array): image taken with all LEDS off
+        Returns:
+            numpy array: colored image as a numpy array
+        """
+        pure_red= Processing.image_substraction(image_red,image_dark)
+        pure_blue = Processing.image_substraction(image_blue,image_dark)
+        pure_green = Processing.image_substraction(image_green,image_dark)
+        return Processing.image_reconstruction(Processing.scale(pure_blue),Processing.scale(pure_green),Processing.scale(pure_red))
+    
+    @staticmethod
+    def frame_reconstruction(file_name:str, starting_image_flag: str,total_image_captured:int):
+        offset= 0
+        state_bgr = StateBGR()
+        state_rbg=StateRBG()
+        state_grb =  StateGRB()
+        state_rbg.set_next_state(state_bgr)
+        state_grb.set_next_state(state_rbg)
+        state_bgr.set_next_state(state_grb)
+        
+        current_state =state_bgr
+        image_read_obj= ReadH5()
+        image_write = H5Fromat("blue")
+        image_write1 = H5Fromat("green")
+        image_write2 = H5Fromat("red")
+
+        if (starting_image_flag =="b"):
+            current_state = state_bgr
+        elif(starting_image_flag == "g"):
+            current_state = state_grb
+        elif(starting_image_flag == "r"):
+            current_state = state_rbg
+        else :
+            raise Exception("The initial color not specified correctly, please make sure its either b,g or r")
+        for i in range (total_image_captured):
+             var=i+offset
+             image_list = []
+             temp=var
+             for j in range (3):
+                 if temp+2 < total_image_captured-1:                     
+                     image_list.append(image_read_obj.read_files(file_name,str(temp+j)))
+             if len(image_list)==3:
+                 corrected_image = current_state.correct(image_list)
+                 
+                 
+                 #Processing.open_images(imt,"color")
+                 image_write.record_images(corrected_image[0],str(i))
+                 image_write1.record_images(corrected_image[1],str(i))
+                 image_write2.record_images(corrected_image[2],str(i))
+             current_state = current_state.get_next_state()
+
+             
+                    
+      
+
+    @staticmethod
+    def open_images( image,name:str):
         """displys the numpy array as image
         Args:
             image (np.Arrayterator): numpy array
         """
-        cv2.imshow("image",image)
+        cv2.imshow(name,image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
     @staticmethod
@@ -96,6 +176,7 @@ class Processing():
         print(pixel_value)
         refrence = np.array([refrence_color])
         weight, _, _, _ = np.linalg.lstsq(pixel_value, refrence, rcond=None)
+
         return weight
     @staticmethod
     def fit(image, weight):
@@ -115,7 +196,7 @@ class Processing():
             len(image), len(image[0]), 3)
         return transformed_image.astype(np.uint8)
     @staticmethod
-    def get_color_correction_matrix(image_to_be_corrected, refrence_image,number_of_rois:int):
+    def get_color_correction_matrix(image_to_be_corrected, refrence_image,number_of_rois:int,weight_name:str):
         """generates the weight that can transform the color-
           of imput image into the olor of refrence image
 
@@ -127,10 +208,11 @@ class Processing():
         Returns: Weights
             numpy array: 3*3 transformation matrix
         """
+        obj = H5Fromat(weight_name)
         target_matrix = Processing.__get_matrix(refrence_image,number_of_rois)
         input_matrix= Processing.__get_matrix(image_to_be_corrected,number_of_rois)
         weight= np.linalg.lstsq(input_matrix,target_matrix)
-        return weight[0]
+        obj.record_images(weight[0],0)
     @staticmethod
     def corrrect_color(image, weight):
         """corrects the color in the image WRT weight 
@@ -144,7 +226,7 @@ class Processing():
         """
         h, w, c = image.shape
         flattened_image = image.reshape(-1, 3)
-        transformed_image_flat = flattened_image @ weight.T
+        transformed_image_flat = flattened_image @ weight
         transformed_image_flat = np.clip(transformed_image_flat, 0, 255)
         transformed_image = transformed_image_flat.reshape(h, w, c)
         return transformed_image.astype(np.uint8)    
@@ -175,4 +257,7 @@ class Processing():
         g_pixel = np.mean(cropped_image[:, :, 1])
         r_pixel = np.mean(cropped_image[:, :, 2])
         return [b_pixel,g_pixel,r_pixel]
-    
+    @staticmethod 
+    def binarization(grey_image, threshold):
+      return np.where(grey_image>threshold,225,0).astype(np.uint8)
+        

@@ -11,7 +11,7 @@ class ConstantBrightness(CommonMethods):
         self._instrument =instrument
         self._instrument.write('SOURce:MODe CB')
         super().__init__(self._instrument)
-        self._forward_current:float           
+        self._forward_current:float
     def set_forward_current(self,val:float):
         """sets the forward current 
 

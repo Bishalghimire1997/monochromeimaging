@@ -28,3 +28,5 @@ Thumbs.db
 *.jpg
 *.webp
 *.bmp
+*.pth
+*.pyc

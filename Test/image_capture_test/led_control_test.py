@@ -2,8 +2,6 @@
     """
 from thors_lab_led_control_package.led_control import LedControl
 obj = LedControl()
-
-
 #simulate sine wave 
 #obj.simulate_sine_at(0,90,180) #100 = blue, 001 = green, 010=print(obj.detect_led())
 
@@ -16,6 +14,6 @@ def cluster_on_off_test():
         for j in range(2):
             for k in range(2):
                 vect =[i,j,k]
+                print(vect)
                 obj.simulate_color(vect,5)
 cluster_on_off_test()
-
