@@ -52,7 +52,7 @@ class FlirCamera(CameraInterface):
             if not image.IsIncomplete():
                 threading.Thread(target = self.save_h5, args = (image,i)).start()
                 state=state.get_next_state()
-        state.deactivate()           
+        state.deactivate()       
         self._cam.EndAcquisition()
         self._cam.DeInit()
         del self._cam
@@ -140,7 +140,9 @@ class FlirCamera(CameraInterface):
         Returns:
             _type_: _description_ returs images
         """
+        
         return camera.GetNextImage()
+    
     @property
     def camera(self):
         """use to get self._cam 
