@@ -26,7 +26,7 @@ class FlirCamera(CameraInterface):
         self._g.set_next_state(self._r)
         self._r.set_next_state(self._b)
         self._param = param
-        self._im_file = H5Fromat(param.path)
+        self._im_file = H5Fromat(param.path,override=True)
         self._system= PySpin.System.GetInstance()
         self._cam:Camera = self._system.GetCameras()[0]
         self._cam.Init()

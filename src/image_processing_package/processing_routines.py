@@ -86,9 +86,9 @@ class Processing():
         
         current_state =state_bgr
         image_read_obj= ReadH5()
-        image_write = H5Fromat("blue")
-        image_write1 = H5Fromat("green")
-        image_write2 = H5Fromat("red")
+        image_write = H5Fromat("blue",override=True)
+        image_write1 = H5Fromat("green",override=True)
+        image_write2 = H5Fromat("red",override=True)
 
         if (starting_image_flag =="b"):
             current_state = state_bgr
@@ -113,10 +113,7 @@ class Processing():
                  image_write.record_images(corrected_image[0],str(i))
                  image_write1.record_images(corrected_image[1],str(i))
                  image_write2.record_images(corrected_image[2],str(i))
-             current_state = current_state.get_next_state()
-
-             
-                    
+             current_state = current_state.get_next_state()                   
       
 
     @staticmethod
@@ -208,7 +205,7 @@ class Processing():
         Returns: Weights
             numpy array: 3*3 transformation matrix
         """
-        obj = H5Fromat(weight_name)
+        obj = H5Fromat(weight_name,override=True)
         target_matrix = Processing.__get_matrix(refrence_image,number_of_rois)
         input_matrix= Processing.__get_matrix(image_to_be_corrected,number_of_rois)
         weight= np.linalg.lstsq(input_matrix,target_matrix)

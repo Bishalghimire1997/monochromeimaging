@@ -33,43 +33,50 @@ def inaitial_analysis():
     Processing.open_images(Processing.image_reconstruction(blue2,green,red),"after transformation ")
 def loop():      
     read_imaegs = ReadH5()
-    saveblue= H5Fromat("blue1")
-    savegreen = H5Fromat("green1")
-    savered = H5Fromat("red1")
-    save_roi = H5Fromat("ROI")
-    var=601
+    saveblue= H5Fromat("blue1",override=False)
+    savegreen = H5Fromat("green1",override=False)
+    savered = H5Fromat("red1",override=False)
+    save_roi = H5Fromat("ROI",override=False)
+    var=100
     dec_ch = DetectChanges()
-    blue = read_imaegs.read_files("image.h5",str(var))
+    blue = read_imaegs.read_files("blue.h5",str(var))
     roi,_ = dec_ch.select_and_crop_roi(blue)
-    roib=roi
-    roig=False
-    roir =False
+    all_roi = []
+    all_old_image=[]
+    result =[]
     tr=Track("MIL")
     tr.start_tracking(blue,roi)
     for i in range(100):
         b = str(var)
-        g = str(var+1)
-        r= str (var+2)
-        var=var+3     
-        green = read_imaegs.read_files("image.h5",g)
-        red = read_imaegs.read_files("image.h5",r)
-        blue = read_imaegs.read_files("image.h5",b)
-        if i!= 0:
-            _,roib = tr.update_tracking(blue)
-            _,roig = tr.update_tracking(green)
-            _,roir = tr.update_tracking(red)
-            print(roig,roig,roir)
-        """Using multi processing"""
-        with multiprocessing.Pool(processes=3) as pool:
-            result = pool.starmap(DetectChanges.temp,[(blue,roib),(green,roig),(red,roir)])           
-        kp1,blue_image_descriptor  = result[0] #DetectChanges.temp(blue,roi)
-        kp2,green_image_descriptor  = result[1] #DetectChanges.temp(green,False)
-        kp3,red_image_descriptor  = result[2] #DetectChanges.temp(red,False)       
+        g = str(var)
+        r= str (var)
+        var=var+1   
+        green = read_imaegs.read_files("green.h5",g)
+        red = read_imaegs.read_files("red.h5",r)
+        blue = read_imaegs.read_files("blue.h5",b)
+        all_new_images = [blue,green,red]
 
-        """Deserializing the keypoints"""
-        blue_image_key_points = [cv2.KeyPoint(x[0], x[1], x[2], x[3], x[4], x[5], x[6]) for x in kp1]
-        green_image_key_points = [cv2.KeyPoint(x[0], x[1], x[2], x[3], x[4], x[5], x[6]) for x in kp2]
-        red_image_key_points = [cv2.KeyPoint(x[0], x[1], x[2], x[3], x[4], x[5], x[6]) for x in kp3]
+        if i==0:
+             
+             all_roi = tr.update_roi(all_new_images)
+             result = DetectChanges.update_keypoints(all_new_images,all_roi)
+    
+        else:
+            updated_value = DetectChanges.update_keypoints_roi_case(result,all_roi,all_old_image,all_new_images,tr)
+            result = updated_value[0]
+            all_roi=updated_value[1]
+            tr=updated_value[2] 
+        
+    
+        blue_image_key_points,blue_image_descriptor = result[0]
+        green_image_key_points,green_image_descriptor = result[1]
+        red_image_key_points,red_image_descriptor = result[2]
+        all_old_image =[all_new_images[0].copy(),
+                             all_new_images[1].copy(),
+                             all_new_images[2].copy()]
+        print(all_roi)
+
+
         param=dec_ch.check_for_match_second(blue_image_descriptor,blue_image_key_points,green_image_descriptor,green_image_key_points)
         green= dec_ch.transform(green,param[0],param[1],param[4])
         param= dec_ch.check_for_match_second(blue_image_descriptor,blue_image_key_points,red_image_descriptor,red_image_key_points)
@@ -77,15 +84,16 @@ def loop():
         saveblue.record_images(blue,str(i))
         savegreen.record_images(green,str(i))
         savered.record_images(red,str(i))
-        save_roi.record_images(roib,str(i))
+        save_roi.record_images(all_roi[0],str(i))
+
 def play_images_as_video( fps=20.0):
     """" Plays the corrected frams as a video"""
     obj2 = ReadH5()
     imagetransformed=[]
-    for i in range(90):
+    for i in range(20):
         b= obj2.read_files("blue1.h5",str(i))
-        g= obj2.read_files("green1.h5",str(i+1))
-        r=obj2.read_files("red1.h5",str(i+1))
+        g= obj2.read_files("green1.h5",str(i))
+        r=obj2.read_files("red1.h5",str(i))
 
         imagetransformed.append(Processing.image_reconstruction(b,g,r))
                                                                 
@@ -109,7 +117,7 @@ def correct_background():
     roi= []
     read_imaegs = ReadH5()
     var=0
-    for i in range(300):
+    for i in range(20):
         b = str(var)
         g = str(var+1)
         r= str (var+2)

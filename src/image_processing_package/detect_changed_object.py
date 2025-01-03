@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 import skimage as si
 from h5_file_format_package.h5_format import H5Fromat
+from image_processing_package.tracking import Track
+from image_processing_package.processing_routines import Processing
+import multiprocessing
 class DetectChanges():
     @staticmethod
     def generate_mask(input_image,target_image):
@@ -50,11 +53,8 @@ class DetectChanges():
         target_ref_matches = DetectChanges.update_matches(target_ref_matches,20)
         return [input_image_key_points,target_image_key_points,input_image_descriptor,target_image_discriptor,target_ref_matches]
     @staticmethod
-    def update_Keypoints(image,roi):
-        sobel_x = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)  # Horizontal edges
-        sobel_y = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=3)  # Vertical edges
-        sobel_combined = cv2.magnitude(sobel_x, sobel_y)
-        image = sobel_combined = np.uint8(255 * sobel_combined / np.max(sobel_combined))
+    def temp(image,roi):
+       
         shift = cv2.SIFT_create()
         if not roi:
             kp,b=shift.detectAndCompute(image,None)
@@ -65,6 +65,103 @@ class DetectChanges():
             kp,b=shift.detectAndCompute(image,mask_refrence)
             keypoints_tuple = [(kp.pt[0], kp.pt[1], kp.size, kp.angle, kp.response, kp.octave, kp.class_id) for kp in kp]
             return keypoints_tuple,b
+    @staticmethod
+    def update_keypoints(images:list,roi:list):
+        param=[]
+        kp_dserial = []     
+        for i ,image in enumerate(images):
+            param.append((image,roi[i]))
+        with multiprocessing.Pool(processes=len(images)) as pool:
+            result = pool.starmap(DetectChanges.temp,param)
+        for i in result:
+            kp_dserial.append([[cv2.KeyPoint(x[0], x[1], x[2], x[3], x[4], x[5], x[6]) for x in i[0]],i[1]])
+        return kp_dserial
+    @staticmethod
+    def update_keypoints_roi_case(old_KPD,old_roi,old_images,new_images,tracker:Track):
+        case_val = []
+        for i,image in enumerate(old_images):
+            case_val.append(np.array_equal(image,new_images[i]))
+            val= image-new_images[i]
+
+        print(case_val)
+        match case_val:
+            case (True, True, True):
+                return [old_KPD,old_roi,tracker]
+                
+            case (True, True, False):
+                 temp_roi = tracker.update_roi([new_images[2]])          
+                 temp_kpd = DetectChanges.update_keypoints([new_images[2]],temp_roi)
+                 old_KPD[2][0]=temp_kpd[0][0]
+                 old_KPD[2][1]=temp_kpd[0][1]
+                 old_roi[2] = temp_roi[0]
+                 return [old_KPD,old_roi,tracker]
+
+            case (True, False, True):
+                 temp_roi = tracker.update_roi([new_images[1]])          
+                 temp_kpd = DetectChanges.update_keypoints([new_images[1]],temp_roi)
+                 old_KPD[1][0]=temp_kpd[0][0]
+                 old_KPD[1][1]=temp_kpd[0][1]
+                 old_roi[1] = temp_roi[0]
+                 return ([old_KPD,old_roi,tracker])
+            
+            case (True, False, False):
+                temp_roi = tracker.update_roi([new_images[1],new_images[2]])          
+                temp_kpd = DetectChanges.update_keypoints([new_images[1],new_images[2]],temp_roi)
+                old_KPD[1][0]=temp_kpd[0][0]
+                old_KPD[2][0]=temp_kpd[1][0]
+
+                old_KPD[1][1]=temp_kpd[0][1]
+                old_KPD[2][1]=temp_kpd[1][1]
+
+                old_roi[1] = temp_roi[0]
+                old_roi[2] = temp_roi[0]
+
+                return ([old_KPD,old_roi,tracker])
+            
+            case (False, True, True):
+                temp_roi = tracker.update_roi([new_images[0]])          
+                temp_kpd = DetectChanges.update_keypoints([new_images[0]],temp_roi)
+                old_KPD[0][0]=temp_kpd[0][0]
+                old_KPD[0][1]=temp_kpd[0][1]
+                old_roi[0] = temp_roi[0]
+                return ([old_KPD,old_roi,tracker])
+            
+            case (False, True, False):
+                temp_roi = tracker.update_roi([new_images[0],new_images[2]])          
+                temp_kpd = DetectChanges.update_keypoints([new_images[0],new_images[2]],temp_roi)
+
+                old_KPD[0][0]=temp_kpd[0][0]
+                old_KPD[2][0]=temp_kpd[1][0]
+
+                old_KPD[0][1]=temp_kpd[0][1]
+                old_KPD[2][1]=temp_kpd[1][1]
+
+                old_roi[0] = temp_roi[0]
+                old_roi[2] = temp_roi[0]
+                return [old_KPD,old_roi,tracker]
+            case (False, False, True):                               
+                temp_roi = tracker.update_roi([new_images[0],new_images[1]])          
+                temp_kpd = DetectChanges.update_keypoints([new_images[0],new_images[1]],temp_roi)
+
+                old_KPD[0][0]=temp_kpd[0][0]
+                old_KPD[1][0]=temp_kpd[1][0]
+
+                old_KPD[0][1]=temp_kpd[0][1]
+                old_KPD[1][1]=temp_kpd[1][1]
+
+                old_roi[0] = temp_roi[0]
+                old_roi[1] = temp_roi[0]
+                return [old_KPD,old_roi,tracker]
+                
+            case (False, False, False):
+                temp_roi = tracker.update_roi([new_images[0],new_images[1],new_images[2]])          
+                temp_kpd = DetectChanges.update_keypoints([new_images[0],new_images[1],new_images[2]],temp_roi)
+                old_KPD= temp_kpd
+                old_roi = temp_roi
+                return [old_KPD,old_roi,tracker]
+            case _:
+                return [old_KPD, old_roi, tracker]
+        
 
     @staticmethod
     def check_for_match_third(roi1,roi2,input_image,target_image,roi):
@@ -172,9 +269,9 @@ class DetectChanges():
     @staticmethod
     def reconstruct_background(blue_transformed: list, red_transformed: list, green_transformed: list,
                                blue_original: list, red_original: list, green_original: list, roi: list):
-      blue = H5Fromat("bcb")
-      green = H5Fromat("bcg")
-      red = H5Fromat("bcr")
+      blue = H5Fromat("bcb",override=True)
+      green = H5Fromat("bcg",override=True)
+      red = H5Fromat("bcr",override=True)
 
 
       for i in range(len(blue_original)):
