@@ -19,12 +19,6 @@ from flir_cam_led_and_camera_control_package.state_red import StateRed
 class FlirCamera(CameraInterface):
     """A class to handle FLIR camera operations including taking snapshots and saving images."""
     def __init__(self,param:FlirCamParam):
-        self._b= StateBlue()
-        self._g= StateGreen()
-        self._r=StateRed()
-        self._b.set_next_state(self._g)
-        self._g.set_next_state(self._r)
-        self._r.set_next_state(self._b)
         self._param = param
         self._im_file = H5Fromat(param.path,override=True)
         self._system= PySpin.System.GetInstance()
@@ -37,6 +31,13 @@ class FlirCamera(CameraInterface):
             self.cam = self._shutter.auto_shutter_time(self._cam)
 
     def take_snapshot(self):
+        self._b= StateBlue()
+        self._g= StateGreen()
+        self._r=StateRed()
+        self._b.set_next_state(self._g)
+        self._g.set_next_state(self._r)
+        self._r.set_next_state(self._b)
+        
         """_summary_ 
         takes "n" number of images. "n"  can be defined in "flir_camera_ prameter" class
         Args:
@@ -63,15 +64,13 @@ class FlirCamera(CameraInterface):
         Args:
             param (FlirCamParam): Instance of FlirCamPara class
         """
-        #processor = PySpin.ImageProcessor()
-        #processor.SetColorProcessing(PySpin.SPINNAKER_COLOR_PROCESSING_ALGORITHM_EDGE_SENSING)
         self._cam.BeginAcquisition()
+
         for i in range(self._param.snap_count):
-            
+    
             image = self.capture(self._cam)
             if not image.IsIncomplete():
-                threading.Thread(target = self.save_h5, args = (image,i)).start()              
-                
+                threading.Thread(target = self.save_h5_multi, args = (image,i)).start()   
         self._cam.EndAcquisition()
         self._cam.DeInit()
         del self._cam
@@ -130,7 +129,15 @@ class FlirCamera(CameraInterface):
         """
         image_converted = image_result.GetNDArray()
         self._im_file.record_images(image_converted,itter)
+    def save_h5_multi(self,image_result,itter):
+        """Saves the images in .h5 file format
 
+        Args:
+            image_result (): image from FLIR camera
+            itter ():number of time image has been captured
+        """
+        image_converted = image_result.GetNDArray()
+        self._im_file.record_images_multi(image_converted,itter)
     def capture(self,camera):
         """_summary_
 

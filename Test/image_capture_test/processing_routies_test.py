@@ -55,7 +55,7 @@ def image_reconstruction_using_dark():
     dark  =obj.read_files("dark.h5","8")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
     return Processing.image_reconstruction_with_dark_image_refrecne(blue,green,red, dark)
 def frame_reconstruction_test():
-    Processing.frame_reconstruction("image.h5","r",2800)
+    Processing.frame_reconstruction("image.h5","r",1000)
 def twochannelimagetest():
     obj = ReadH5()    
     blue = obj.read_files("image.h5","909")

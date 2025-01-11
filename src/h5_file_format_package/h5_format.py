@@ -20,6 +20,15 @@ class H5Fromat():
             itter (int): the key to the image
         """            
         self._image.create_dataset(str(itter),data=image)
+    def record_images_multi(self,image,itter) :
+        """_summary_ saves the images in h5 file format
+
+        Args:
+            image (numpy array): Image captured by camera
+            itter (int): the key to the image
+        """ 
+        self._image.create_dataset(str(itter),data=image)
+
         
 
    

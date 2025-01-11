@@ -3,34 +3,7 @@ from h5_file_format_package.h5_format_read import ReadH5
 from h5_file_format_package.h5_format import H5Fromat
 from image_processing_package.processing_routines import Processing
 from image_processing_package.detect_changed_object import DetectChanges 
-import multiprocessing
 from image_processing_package.tracking import Track
-
-def inaitial_analysis():
-    """initial test case"""
-    obj2 = ReadH5()
-    blue1 = obj2.read_files("image.h5","60")
-    green = obj2.read_files("image.h5","61")
-    red = obj2.read_files("image.h5","62")
-    Processing.open_images(Processing.image_reconstruction(blue1,green,red),'reconstrucrted')
-    obj = DetectChanges()
-    obj1 = DetectChanges()
-    roi,_= obj1.select_and_crop_roi(blue1)
-    param=obj.check_for_match_second(roi,blue1,green)
-    green= obj.transform(green,param[0],param[1],param[4])
-    param= obj1.check_for_match_second(roi, blue1,red)
-    red= obj.transform(red,param[0],param[1],param[4])
-    Processing.open_images(Processing.image_reconstruction(blue1,green,red),"after transformation ")
-    blue2 = obj2.read_files("image.h5","63")
-    green = obj2.read_files("image.h5","64")
-    red = obj2.read_files("image.h5","65")
-    roi = DetectChanges.updateRoi(roi,blue1,blue2)
-    print(roi)
-    param=obj.check_for_match_second(roi,blue2,green)
-    green= obj.transform(green,param[0],param[1],param[4])
-    param= obj1.check_for_match_second(roi, blue2,red)
-    red= obj.transform(red,param[0],param[1],param[4])
-    Processing.open_images(Processing.image_reconstruction(blue2,green,red),"after transformation ")
 def loop():      
     read_imaegs = ReadH5()
     saveblue= H5Fromat("blue1",override=False)
@@ -46,7 +19,7 @@ def loop():
     result =[]
     tr=Track("MIL")
     tr.start_tracking(blue,roi)
-    for i in range(100):
+    for i in range(2500):
         b = str(var)
         g = str(var)
         r= str (var)
