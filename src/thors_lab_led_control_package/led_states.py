@@ -31,13 +31,11 @@ class StateRed(StateInterface):
         
     def current_state(self):
         self.__led = LedControl()  
-        return self
-        pass
-     
+        return self     
     def get_flag(self):
         return "R"
     def set_next_state(self,state):
-         self.__next_state = state
+        self.__next_state = state
     def get_next_state(self):
         return self.__next_state  
     def activate(self):
