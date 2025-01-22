@@ -14,7 +14,7 @@ class LedControl():
     def __init__(self):
         self._leds=[]
         self._resource_manager = ResourceManager()
-        self._cluster_brightness = 100
+        self._cluster_brightness = 80
         self._leds = self._detect_led()
 
     def _detect_led(self):
@@ -44,27 +44,40 @@ class LedControl():
         self._resource_manager.close()
 
     def _turn_on(self,list_cb_obj:list):
-        thread1= threading.Thread(target=list_cb_obj[0].on())
-        thread2= threading.Thread(target=list_cb_obj[1].on())
-        thread3= threading.Thread(target=list_cb_obj[2].on())
-        thread1.start()
-        thread2.start()
-        thread3.start()
+        #thread1= threading.Thread(target=list_cb_obj[0].on)
+        #thread2= threading.Thread(target=list_cb_obj[1].on)
+        #thread3= threading.Thread(target=list_cb_obj[2].on)
+        #thread1.start()
+        #thread2.start()
+        #thread3.start()
+        #thread1.join()
+        #thread2.join()
+        #thread3.join()
+        list_cb_obj[0].on()
+        list_cb_obj[1].on()
+        list_cb_obj[2].on()
+
 
     def _turn_off(self,list_cb_obj:list):
-        thread1= threading.Thread(target=list_cb_obj[0].off())
-        thread2= threading.Thread(target=list_cb_obj[1].off())
-        thread3= threading.Thread(target=list_cb_obj[2].off())
+        thread1= threading.Thread(target=list_cb_obj[0].off)
+        thread2= threading.Thread(target=list_cb_obj[1].off)
+        thread3= threading.Thread(target=list_cb_obj[2].off)
         thread1.start()
         thread2.start()
         thread3.start()
+        thread1.join()
+        thread2.join()
+        thread3.join()
     def _set_brightness(self,list_cb_obj:list,vect:list):
-        thread1= threading.Thread(target=list_cb_obj[0].set_led_brigntness(vect[0]))
-        thread2= threading.Thread(target=list_cb_obj[1].set_led_brigntness(vect[1]))
-        thread3= threading.Thread(target=list_cb_obj[2].set_led_brigntness(vect[2]))
+        thread1= threading.Thread(target=list_cb_obj[0].set_led_brigntness,args=(vect[0],))
+        thread2= threading.Thread(target=list_cb_obj[1].set_led_brigntness,args=(vect[1],))
+        thread3= threading.Thread(target=list_cb_obj[2].set_led_brigntness,args=(vect[2],))
         thread1.start()
         thread2.start()
         thread3.start()
+        thread1.join()
+        thread2.join()
+        thread3.join()
     def simulate_sine_at(self,phase_r:int,phase_b:int,phase_g:int):
         """runs the three LED in sine wave at the phase difference
         indicated by phase_r, phase_b and phase_g
@@ -83,6 +96,9 @@ class LedControl():
         thread1.start()
         thread2.start()
         thread3.start()
+        thread1.join()
+        thread2.join()
+        thread3.join()
     def simulate_color(self,ratio:list, delay):
         """genere color for delay interval of time 
 
@@ -124,18 +140,18 @@ class LedControl():
 
 
     def _brightness_vect(self,ratio:list):
-        # br = []
-        # ratio_sum = sum(ratio)
-        # if ratio_sum ==1:            
-        #     br = [x * self._cluster_brightness for x in ratio]
+         br = [x * self._cluster_brightness for x in ratio]
+         #ratio_sum = sum(ratio)
+         #if ratio_sum ==1:            
+             #br = [x * self._cluster_brightness for x in ratio]
 
-        # elif ratio_sum<1:
-        #     br = [x * 0 for x in ratio]
-        # else:
-        #     for i in ratio:
-        #         br.append(self._cluster_brightness*i/ratio_sum) 
+         #elif ratio_sum<1:
+            # br = [x * 0 for x in ratio]
+         #else:
+             #for i in ratio:
+                 #br.append(self._cluster_brightness*i/ratio_sum) 
          
-        return   [x * self._cluster_brightness for x in ratio]
+         return br
     
     
     

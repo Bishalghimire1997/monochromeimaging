@@ -1,7 +1,6 @@
 
-from flir_camera_parameter_package.parameter_interface import Parameters
 
-class FlirCamParam(Parameters):
+class FlirCamParam():
     """
     FlirCamParam is a class for managing parameters of a FLIR camera.
 
@@ -14,11 +13,11 @@ class FlirCamParam(Parameters):
         """
         Initializes the FlirCamParam class with default values.
         """
-        self._path:str = "image"
-        self._snap_count:int = 10
+        self._path:str = "image.h5"
+        self._snap_count:int = 1000
         self._trigger:bool = False
         self._default_shutter_time:bool =True
-        self._shutter_time:int=10000
+        self._shutter_time:int=3000
     @property
     def default_shutter_time(self):
         """Flag to check if the manual shutter speed is requested.

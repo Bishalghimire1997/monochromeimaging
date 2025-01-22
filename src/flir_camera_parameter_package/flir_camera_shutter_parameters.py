@@ -1,8 +1,7 @@
 """_summary_"""
 import PySpin
 from PySpin import Camera
-from flir_camera_parameter_package.parameter_interface import Parameters
-class ShutterTimeControl(Parameters):
+class ShutterTimeControl():
     """
     changes the time interval to keep the shutter open in 
     """

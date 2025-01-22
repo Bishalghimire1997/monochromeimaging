@@ -1,11 +1,12 @@
 """Class to process the image"""
 import cv2
 import numpy as np
-from h5_file_format_package.h5_format import H5Fromat
-from image_processing_package.state_grb import StateGRB
-from image_processing_package.state_rbg import StateRBG
-from image_processing_package.state_bgr import StateBGR
-from h5_file_format_package.h5_format_read import ReadH5
+from h5_file_format_package.h5_format import H5FormatRead
+from h5_file_format_package.h5_format import H5FromatWrite
+from image_processing_package.frame_pattern_allignment_state import StateGRB
+from image_processing_package.frame_pattern_allignment_state import StateRBG
+from image_processing_package.frame_pattern_allignment_state import StateBGR
+
 
 class Processing():
     """class to process the image """    
@@ -42,38 +43,7 @@ class Processing():
             _type_: _description_
         """
         return np.stack((image_blue,image_green,image_red),axis=-1)
-    @staticmethod
-    def image_reconstruction_multi(image_white, image_rg,image_rb, image_bg):
-        """Generates the color image from the four imges
-        Args:
-            image_white (numpy array): image taken in the White light
-            image_rg (numpy array): image taken in red green light 
-            image_rb (numpy array): Image taken in red blue  light 
-            image_bg (numpy array): image taken in blue green light
-        Returns:
-            numyp array: Colored Images
-        """
-        r= ((image_white-image_bg)*2).astype(np.uint8)
-        g= ((image_white- image_rb)*2).astype(np.uint8)
-        b= ((image_white - image_rg)*2).astype(np.uint8)
-        return Processing.image_reconstruction(b,g,r)
 
-    @staticmethod
-    def image_reconstruction_with_dark_image_refrecne(image_blue,image_green,image_red,image_dark):
-        """Reconstructs the color image by reducign the dark image frm the image taken at different color
-        Args:
-            image_blue (numpy array): image taken at blue light 
-            image_green (numpy array): image taken at green light 
-            image_red (numpy array): image taken at red light 
-            image_dark (numpy array): image taken with all LEDS off
-        Returns:
-            numpy array: colored image as a numpy array
-        """
-        pure_red= Processing.image_substraction(image_red,image_dark)
-        pure_blue = Processing.image_substraction(image_blue,image_dark)
-        pure_green = Processing.image_substraction(image_green,image_dark)
-        return Processing.image_reconstruction(Processing.scale(pure_blue),Processing.scale(pure_green),Processing.scale(pure_red))
-    
     @staticmethod
     def frame_reconstruction(file_name:str, starting_image_flag: str,total_image_captured:int):
         offset= 0
@@ -85,10 +55,10 @@ class Processing():
         state_bgr.set_next_state(state_grb)
         
         current_state =state_bgr
-        image_read_obj= ReadH5()
-        image_write = H5Fromat("blue",override=True)
-        image_write1 = H5Fromat("green",override=True)
-        image_write2 = H5Fromat("red",override=True)
+        image_read_obj= H5FormatRead()
+        image_write = H5FromatWrite("blue",override=True)
+        image_write1 = H5FromatWrite("green",override=True)
+        image_write2 = H5FromatWrite("red",override=True)
 
         if (starting_image_flag =="b"):
             current_state = state_bgr
@@ -125,34 +95,7 @@ class Processing():
         cv2.imshow(name,image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-    @staticmethod
-    def ratio_method(white_image, red_image,blue_image,green_image):
 
-        """tries to reconstruct the image computign the ration WRT white image
-
-        Returns:
-           numpy array: reconstructed images
-        """
-        red_to_white = red_image/white_image
-        blue_to_white = blue_image/white_image
-        green_to_white =green_image/white_image
-        return Processing.image_reconstruction(
-        Processing.scale( red_to_white),
-        Processing.scale(blue_to_white),
-        Processing.scale( green_to_white)
-        )
-    @staticmethod
-    def scale(arr):
-        """scale the image in the range of 0 to 255 pixel value
-
-        Args:
-            arr (numpy array): image as a numpy array
-
-        Returns:
-            numpy array:scaled images
-        """
-        scaled= ((arr-np.min(arr))/(np.max(arr)-np.min(arr)))*255
-        return scaled.astype(np.uint8)    
     @staticmethod
     def get_weight(roi:tuple,refrence_color: list, image):
         """Generates the weight required to reansfer average
@@ -205,7 +148,7 @@ class Processing():
         Returns: Weights
             numpy array: 3*3 transformation matrix
         """
-        obj = H5Fromat(weight_name,override=True)
+        obj = H5FromatWrite(weight_name,override=True)
         target_matrix = Processing.__get_matrix(refrence_image,number_of_rois)
         input_matrix= Processing.__get_matrix(image_to_be_corrected,number_of_rois)
         weight= np.linalg.lstsq(input_matrix,target_matrix)
@@ -254,7 +197,3 @@ class Processing():
         g_pixel = np.mean(cropped_image[:, :, 1])
         r_pixel = np.mean(cropped_image[:, :, 2])
         return [b_pixel,g_pixel,r_pixel]
-    @staticmethod 
-    def binarization(grey_image, threshold):
-      return np.where(grey_image>threshold,225,0).astype(np.uint8)
-        
