@@ -14,9 +14,9 @@ class FlirCamParam():
         Initializes the FlirCamParam class with default values.
         """
         self._path:str = "image.h5"
-        self._snap_count:int = 1000
+        self._snap_count:int = 500
         self._trigger:bool = False
-        self._default_shutter_time:bool =True
+        self._default_shutter_time:bool =False
         self._shutter_time:int=3000
     @property
     def default_shutter_time(self):

@@ -2,8 +2,6 @@
 from abc import ABC
 class FrameReconstructionInterface(ABC):
     """Interface of the statemachine"""
-    pass 
-
 
 class StateBGR(FrameReconstructionInterface):
     def __init__(self):
@@ -13,14 +11,12 @@ class StateBGR(FrameReconstructionInterface):
         print("state BGR")     
         return arr
     def set_next_state(self,state):
-        self._next_state = state 
-        pass
+        self._next_state = state
     def get_next_state(self):
         return self._next_state
-        pass
     def get_state(self):
         return self
-    
+
 class StateGRB(FrameReconstructionInterface):
     def __init__(self):
         self._next_state = self       
@@ -33,11 +29,9 @@ class StateGRB(FrameReconstructionInterface):
         print("state GRB")  
         return temp
     def set_next_state(self,state):
-        self._next_state = state 
-        pass
+        self._next_state = state
     def get_next_state(self):
         return self._next_state
-        pass
     def get_state(self):
         return self
 

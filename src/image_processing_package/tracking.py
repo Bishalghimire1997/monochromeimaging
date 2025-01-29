@@ -1,5 +1,4 @@
 import cv2
-
 class Track:
     def __init__(self, tracker_type):
         self.tracker_type = tracker_type
