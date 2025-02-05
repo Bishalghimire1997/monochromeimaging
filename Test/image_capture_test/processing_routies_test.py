@@ -16,7 +16,7 @@ def histogram_test():
     plt.plot(red, label="Red")
     plt.plot(green, label="Green")
     plt.xlabel("Pixel Intensity")
-    plt.ylabel("Frequency")
+    plt.ylabel("Frequency")  
     plt.legend()
     plt.show()
 def image_reconstruction_test():
@@ -43,9 +43,9 @@ def twochannelimagetest():
 
 def color_correction_test():
     obj = H5FormatRead()
-    b= obj.read_files("image.h5",str(8))
-    g= obj.read_files("image.h5",str(9))
-    r= obj.read_files("image.h5",str(10))
+    b= obj.read_files("image.h5",str(15))
+    g= obj.read_files("image.h5",str(16))
+    r= obj.read_files("image.h5",str(17))
 
     image1 = cv2.merge([b,g,r])
     Processing.open_images(image1,"Img")

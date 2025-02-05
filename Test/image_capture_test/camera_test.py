@@ -1,24 +1,13 @@
-from flir_image_capture_package.flir_image_capture import FlirCamera
-from flir_image_capture_package.flir_image_capture import FlirCamParam
-def save_only():
-    campara = FlirCamParam()
-    cam = FlirCamera(campara)
-    cam.activate(feed=False,record=True,led_flash=False)
+from flir_image_capture_package.hardware_trigger import FlirTriggerControl
+from flir_image_capture_package.software_trigger import FlirTriggerControl as FTC
+from flir_camera_parameter_package.flir_camera_parameters import FlirCamParam
+def hardware_trigger_test():
+    param= FlirCamParam()
+    obj = FlirTriggerControl(param)
+    obj.capture()
+def software_trigger_test():
+    param= FlirCamParam()
+    obj = FTC(param)
+    obj.capture()
 
-def feed_only():
-    campara = FlirCamParam()
-    cam = FlirCamera(campara)
-    cam.activate(feed=True,record=False,led_flash=False)
-
-def feed_and_save():
-    campara = FlirCamParam()
-    cam = FlirCamera(campara)
-    cam.activate(feed=True,record=True,led_flash=False)
-
-def color_feed():
-    campara = FlirCamParam()
-    cam = FlirCamera(campara)
-    cam.activate(feed=True,record=False,led_flash=True)
-
-if __name__ == "__main__":
-    color_feed()
+hardware_trigger_test()
