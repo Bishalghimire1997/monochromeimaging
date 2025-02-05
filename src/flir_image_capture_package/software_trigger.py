@@ -3,8 +3,6 @@ from PySpin import Camera
 import cv2
 import h5py
 import time
-import numpy as np
-from image_processing_package.processing_routines import Processing 
 import threading
 from flir_camera_parameter_package.flir_camera_shutter_parameters import ShutterTimeControl
 from flir_camera_parameter_package .flir_camera_parameters import FlirCamParam
