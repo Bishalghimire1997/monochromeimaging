@@ -50,7 +50,6 @@ class FlirTriggerControl():
         self._cam.BeginAcquisition()        
         data_queue_disp = queue.Queue() if feed else None
         data_queue_write = queue.Queue() if record else None
-        #state = StateMachinePulse().get_first_state() if led_flash else None
         display_thread = threading.Thread(target=self.__display_images,args =(data_queue_disp,))
         writer_process = threading.Thread(target = self.__save,
                                           args = (self._param.path,data_queue_write))
@@ -60,7 +59,7 @@ class FlirTriggerControl():
         if record:
             writer_process.daemon = True
             writer_process.start()      
-        for i in range(500):
+        for i in range(5000):
             image_result = self._capture(i)      
             if feed:
                 image_reduced= self.reduce_image_quality(image_result)
