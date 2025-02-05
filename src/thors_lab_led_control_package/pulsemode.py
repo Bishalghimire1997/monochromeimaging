@@ -3,7 +3,7 @@ class LEDPulseModeController():
     def __init__(self, instrument):
         self._instrument = instrument
         instrument.write("SOURce:MODE PULS")     
-        self.on_time = 0.009
+        self.on_time = 0.01
         self.off_time =0.01
         self.pulse_amplitude = 100
         self.pulse_count =1
@@ -15,7 +15,7 @@ class LEDPulseModeController():
     def off(self):
         """turns the led off
         """
-        self._instrument.write("OUTPut:STATe OFF")
+        self._instrument.write("SOURce:PULS:OUTPut:STATe OFF")
 
     def set_pulse_count(self,val:int):
         self._instrument.write('SOURce:PULS:COUNt '+str(val))
