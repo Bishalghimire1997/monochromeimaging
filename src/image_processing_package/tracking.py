@@ -1,5 +1,4 @@
 import cv2
-
 class Track:
     def __init__(self, tracker_type):
         self.tracker_type = tracker_type
@@ -28,7 +27,14 @@ class Track:
     def start_tracking(self, frame, bounding_box):
         self.tracker.init(frame, bounding_box)
 
-    def update_tracking(self, frame):
+    def __update_tracking(self, frame):
         success, bbox = self.tracker.update(frame)
         return success, bbox
+    def update_roi(self,frame:list):
+        roi=[]
+        for i in frame:
+            roi.append(self.__update_tracking(i)[1])
+        return roi
+
+
 
