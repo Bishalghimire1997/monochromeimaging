@@ -10,7 +10,7 @@ import queue
 class FlirTriggerControl():
     def __init__(self,param:FlirCamParam):
         self._param= param
-        self.shutter = 3000
+        self.shutter = 10000
         self._system= PySpin.System.GetInstance()
         self._cam:Camera = self._system.GetCameras()[0]
         self._cam.Init()
@@ -18,6 +18,7 @@ class FlirTriggerControl():
         self._cam =self._shutter.manual_shutter(self._cam,self.shutter)       
         self._cam.AcquisitionMode.SetValue(PySpin.AcquisitionMode_Continuous)
         self.ard= ArduinoControl()
+        self.thr = True
         #self._cam.AcquisitionFrameCount.SetValue(100)    
 
         pass 
@@ -50,7 +51,6 @@ class FlirTriggerControl():
         self._cam.BeginAcquisition()        
         data_queue_disp = queue.Queue() if feed else None
         data_queue_write = queue.Queue() if record else None
-        #state = StateMachinePulse().get_first_state() if led_flash else None
         display_thread = threading.Thread(target=self.__display_images,args =(data_queue_disp,))
         writer_process = threading.Thread(target = self.__save,
                                           args = (self._param.path,data_queue_write))
@@ -60,45 +60,48 @@ class FlirTriggerControl():
         if record:
             writer_process.daemon = True
             writer_process.start()      
-        for i in range(500):
+        for i in range(3000):
             image_result = self._capture(i)      
             if feed:
                 image_reduced= self.reduce_image_quality(image_result)
                 data_queue_disp.put(("h",image_reduced))
             if record:
                 data_queue_write.put((str(i),image_result))
-               
+        self.thr = False       
         self._cam.EndAcquisition()
         self._cam.DeInit()
         self.ard.stop()
+       
         del self._cam
         
 
     def __save(self, path, data_queue):
         """Saves the images in .h5 file format."""
-        thr = True
+       
         with h5py.File(path, "w") as h5_file:
-            while thr:
+            while self.thr:
                 try:
                     item = data_queue.get(timeout=20)  # Add a timeout to prevent indefinite blocking
                 except queue.Empty:
                     print("Queue is empty, terminating.")
                     break
                 if item is None:
-                    thr = False
+                    self.thr = False
                     break  # Terminate the loop when a None item is received
                 itter, image = item
                 # Save the image in the HDF5 file
                 h5_file.create_dataset(itter, data=image)
+                if int(itter) % 100 == 0:
+                    h5_file.flush()
     def __display_images(self, data_queue):
-        thr = True
-        while thr:
+       
+        while self.thr:
             images_batch = []  # List to hold the three images
             image_flag = []
             for _ in range(3):  # Get three images at once
-                item = data_queue.get(block = True)
+                item = data_queue.get(block = True,timeout = 3)
                 if item is None:
-                    thr = False  # Exit the loop if None item is received
+                    self.thr = False  # Exit the loop if None item is received
                 flag, image = item
                 images_batch.append(image)  # Append the image to the batch
                 image_flag.append(flag)
