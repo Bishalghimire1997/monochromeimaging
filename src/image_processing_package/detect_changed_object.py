@@ -22,7 +22,7 @@ class DetectChanges():
     @staticmethod
     def detect_feature(image,roi):
        
-        shift = cv2.ORB_create(500)#cv2.SIFT_create()
+        shift = cv2.SIFT_create(500)#cv2.ORB_create()#
         if not roi:
             kp,b=shift.detectAndCompute(image,None)
             keypoints_tuple = [(kp.pt[0], kp.pt[1], kp.size, kp.angle, kp.response, kp.octave, kp.class_id) for kp in kp]

@@ -14,3 +14,4 @@ def software_trigger_test():
     obj.capture()
 
 hardware_trigger_test()
+ 
