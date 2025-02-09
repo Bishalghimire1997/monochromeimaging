@@ -1,16 +1,18 @@
 """ teste set for led_control class
     """
 import time
-from pyvisa import ResourceManager
 from thors_lab_led_control_package.led_state_pulse import StateMachinePulse
 from thors_lab_led_control_package.led_states import StateMachineBGR
-def state_test_constant_brightness(): 
+def state_test_constant_brightness():
+    """Test on constant brightness mode
+    """
     state = StateMachineBGR().get_first_state()
     for i in range(50):
         state.activate()
         state = state.get_next_state()
     state.deactivate()
-def state_test_pulse(): 
+def state_test_pulse():
+    """Test on constant pulse mode"""     
     sm = StateMachinePulse()
 
     state = sm.get_first_state()
@@ -20,6 +22,4 @@ def state_test_pulse():
         state= state.get_next_state()
     sm.close_resources()
 if __name__ == "__main__":
-     state_test_pulse()
-
-
+    state_test_pulse()

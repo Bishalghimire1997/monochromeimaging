@@ -50,7 +50,7 @@ class LedConfig():
 
     def get_red_led(self):
         return self.green_led
-
+        
     def get_green_led(self):
         return self.red_led
     
