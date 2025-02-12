@@ -83,7 +83,18 @@ class Processing():
                  image_write.record_images(corrected_image[0],str(i))
                  image_write1.record_images(corrected_image[1],str(i))
                  image_write2.record_images(corrected_image[2],str(i))
-             current_state = current_state.get_next_state()                   
+             current_state = current_state.get_next_state()    
+    @staticmethod
+    def gamma_correction(image: np.ndarray, gamma: float = 2.2):
+        inv_gamma = 1.0 / gamma
+
+    # Build a lookup table for faster pixel transformation
+        lookup_table = np.array([(i / 255.0) ** inv_gamma * 255 for i in np.arange(0, 256)]).astype("uint8")
+
+    # Apply the lookup table to transform the image
+        corrected_image = cv2.LUT(image, lookup_table)
+
+        return                
       
 
     @staticmethod

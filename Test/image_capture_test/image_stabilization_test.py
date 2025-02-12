@@ -13,23 +13,23 @@ def loop():
     savegreen = H5FromatWrite("green1",override=False)
     savered = H5FromatWrite("red1",override=False)
     save_roi = H5FromatWrite("ROI",override=False)
-    var=10
+    var=0
     dec_ch = DetectChanges()
     blue = read_imaegs.read_files("image.h5",str(var))
     roi,_ = dec_ch.select_and_crop_roi(blue)
     all_roi = []
     all_old_image=[]
     result =[]
-    tr=Track("MIL")
+    tr=Track("CSRT")
     tr.start_tracking(blue,roi)
     for i in range(950):
         b = str(var)
-        g = str(var)
-        r= str (var)
-        var=var+1
-        green = read_imaegs.read_files("green.h5",g)
-        red = read_imaegs.read_files("red.h5",r)
-        blue = read_imaegs.read_files("blue.h5",b)
+        g = str(var+1)
+        r= str (var+2)
+        var=var+3
+        green = read_imaegs.read_files("image.h5",g)
+        red = read_imaegs.read_files("image.h5",r)
+        blue = read_imaegs.read_files("image.h5",b)
         all_new_images = [blue,green,red]
         if i==0:
             all_roi = tr.update_roi(all_new_images)
@@ -62,7 +62,7 @@ def play_images_as_video( fps=20.0):
     """" Plays the corrected frams as a video"""
     obj2 = H5FormatRead()
     imagetransformed=[]
-    for i in range(150):
+    for i in range(90):
         b= obj2.read_files("bcb.h5",str(i))
         g= obj2.read_files("bcg.h5",str(i))
         r=obj2.read_files("bcr.h5",str(i))
@@ -80,14 +80,14 @@ def play_images_as_video1( fps=20.0):
     obj2 = H5FormatRead()
     var=0
     imagetransformed=[]
-    for i in range(600):
+    for i in range(300):
         b1= var
         b2 = var+1
         b3 = var+2
         var=var+3
-        b= obj2.read_files("image.h5",str(b1))
+        b= obj2.read_files("image.h5",str(b3))
         g= obj2.read_files("image.h5",str(b2))
-        r=obj2.read_files("image.h5",str(b3))
+        r=obj2.read_files("image.h5",str(b1))
         imagetransformed.append(Processing.image_reconstruction(b,g,r))                                                                
     delay = int(1000 / fps)
     for image in imagetransformed:
@@ -107,14 +107,15 @@ def correct_background():
     red_t=[]
     roi= []
     read_imaegs = H5FormatRead()
-    var=10
+    var=0
     for i in range(100):
         b = str(var)
-        g = str(var)
-        r= str (var)
-        blue_o.append(read_imaegs.read_files("blue.h5",b))
-        green_o.append(read_imaegs.read_files("green.h5",g))
-        red_o.append(read_imaegs.read_files("red.h5",r))
+        g = str(var+1)
+        r= str (var+2)
+        var = var+3
+        blue_o.append(read_imaegs.read_files("image.h5",b))
+        green_o.append(read_imaegs.read_files("image.h5",g))
+        red_o.append(read_imaegs.read_files("image.h5",r))
         blue_t.append(read_imaegs.read_files("blue1.h5",str(i)))
         green_t.append(read_imaegs.read_files("green1.h5",str(i)))
         red_t.append(read_imaegs.read_files("red1.h5",str(i)))
@@ -123,4 +124,4 @@ def correct_background():
     print(roi[0])
     DetectChanges.reconstruct_background(blue_t,red_t,green_t,blue_o,green_o,red_o,roi)
 if __name__ == '__main__':
-    play_images_as_video()
+    play_images_as_video1(1)

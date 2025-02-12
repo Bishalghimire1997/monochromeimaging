@@ -56,8 +56,7 @@ class StateBlue(StateInterface):
         return "B"    
     def get_next_state(self):
         # while int(self.get_status()) == 1:
-        #      pass
-    
+        #      pass    
         return self.__next_state
     def activate(self):
         self.__led.on()
