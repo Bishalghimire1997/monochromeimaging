@@ -15,7 +15,7 @@ class FlirTriggerControl():
         self._system= PySpin.System.GetInstance()
         self._cam:Camera = self._system.GetCameras()[0]
         self._cam.Init()
-        self._shutter = ShutterTimeControl(self._cam)
+        self._shutter = ShutterTimeControl()
         self._cam =self._shutter.manual_shutter(self._cam,self.shutter)       
         self._cam.AcquisitionMode.SetValue(PySpin.AcquisitionMode_Continuous)
 

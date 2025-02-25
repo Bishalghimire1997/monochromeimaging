@@ -12,5 +12,4 @@ def software_trigger_test():
     param= FlirCamParam()
     obj = FTC(param)
     obj.capture()
-
 hardware_trigger_test()

@@ -4,24 +4,26 @@ import PySpin
 from PySpin import Camera 
 import cv2
 import h5py
-from flir_camera_parameter_package.flir_camera_shutter_parameters import ShutterTimeControl
-from image_processing_package.processing_routines import Processing
 from flir_camera_parameter_package .flir_camera_parameters import FlirCamParam
+from flir_camera_parameter_package .flir_camera_shutter_parameters import ShutterTimeControl
+
+from thors_lab_led_control_package.led_states import StateMachineBGR
 from flir_image_capture_package.arduino_control import ArduinoControl
 
 class FlirTriggerControl():
     """Sets the camera to trigger mode"""
     def __init__(self,param:FlirCamParam):
         self._param= param
-        self.shutter =800
         self._system= PySpin.System.GetInstance()
         self._cam:Camera = self._system.GetCameras()[0]
         self._cam.Init()
-        self._shutter = ShutterTimeControl(self._cam)
-        self._cam =self._shutter.manual_shutter(self._cam,self.shutter)       
+        self._cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
         self._cam.AcquisitionMode.SetValue(PySpin.AcquisitionMode_Continuous)
+        self._cam = ShutterTimeControl.turn_auto_shutter_off(self._cam)
         self.ard= ArduinoControl()
         self.ard.stop()
+        self.state_obj = StateMachineBGR()
+        self.__state = self.state_obj.get_first_state()
         self.thr = True
     def chunk_enable(self):
         """Enables all the writeable chunk features"""
@@ -93,7 +95,7 @@ class FlirTriggerControl():
         if record:
             writer_process.daemon = True
             writer_process.start()
-        for i in range(7000):
+        for i in range(1000):
             led_status,image_result = self._capture(i)      
             if feed:
                 image_reduced= image_result#self.reduce_image_quality(image_result)
@@ -126,7 +128,7 @@ class FlirTriggerControl():
             images_batch = []
             image_flag = []
             for _ in range(3):
-                item = data_queue.get(block = True,timeout = 20)
+                item = data_queue.get(block = True,timeout = 100)
                 if item is None:
                     self.thr = False
                 flag, image = item
@@ -147,18 +149,26 @@ class FlirTriggerControl():
         reduced_image = cv2.resize(image, (640, 480), interpolation=cv2.INTER_LINEAR)
         return reduced_image
 
-    def __processing(self,flag:list,image_batch):
-        b= flag.index(0)
-        g= flag.index(1)
-        r= flag.index(2)        
-        image = cv2.merge([image_batch[b],image_batch[g],image_batch[r]])     
-        return image    
+    def __processing(self,flag:list,image_batch):        
+        try:
+            b= flag.index(0)
+            g= flag.index(1)
+            r= flag.index(2)           
+            image = cv2.merge([image_batch[b],image_batch[g],image_batch[r]])
+            return image   
+        except   ValueError:
+            print("image cannot be sync properly")
+            print(flag)     
+            return   cv2.merge([image_batch[0],image_batch[1],image_batch[2]])
+        
 
     def _capture(self,i):
+        self._cam= self.__state.setExp(self._cam)
         if i == 0:
             self.ard.start()
         raw = self._cam.GetNextImage()
         image = raw.GetNDArray()
         status = self.get_led_status(raw)
+        self.__state = self.__state.get_next_state()
         return [status,image]
     

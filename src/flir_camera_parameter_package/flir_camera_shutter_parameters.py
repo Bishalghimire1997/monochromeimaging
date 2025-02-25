@@ -5,7 +5,7 @@ class ShutterTimeControl():
     """
     changes the time interval to keep the shutter open in 
     """
-    def __init__(self,cam:Camera):
+    def __init__(self):
         pass
     def auto_shutter_time(self,cam:Camera):
         """resets the shutter time in camera instace to default
@@ -30,11 +30,14 @@ class ShutterTimeControl():
         Returns:
             _type_: _description_
         """
+        
+        cam.ExposureTime.SetValue( min(cam.ExposureTime.GetMax(), shutter_value))
+        return cam
+    @staticmethod
+    def turn_auto_shutter_off(cam:Camera):
         if cam.ExposureAuto.GetAccessMode() != PySpin.RW:
             return cam
         cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
         if cam.ExposureAuto.GetAccessMode() != PySpin.RW:
             return cam
-        cam.ExposureTime.SetValue( min(cam.ExposureTime.GetMax(), shutter_value))
         return cam
-    
