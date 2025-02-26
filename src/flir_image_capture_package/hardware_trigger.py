@@ -1,4 +1,5 @@
 import threading
+import sys 
 import queue
 import PySpin
 from PySpin import Camera 
@@ -13,7 +14,7 @@ class FlirTriggerControl():
     """Sets the camera to trigger mode"""
     def __init__(self,param:FlirCamParam):
         self._param= param
-        self.shutter =800
+        self.shutter =2000
         self._system= PySpin.System.GetInstance()
         self._cam:Camera = self._system.GetCameras()[0]
         self._cam.Init()
@@ -43,6 +44,7 @@ class FlirTriggerControl():
           and 2 if the light is red"""
         chunk_data = image.GetChunkData()
         end_line_status = chunk_data.GetExposureEndLineStatusAll()
+        sys.stdout.flush()
         if end_line_status == 5:
             return 1
         elif end_line_status == 9:
@@ -50,7 +52,7 @@ class FlirTriggerControl():
         elif end_line_status == 13:
             return 2
         else:
-            raise ValueError("Plese make sure the The red wire of camera is connected to pin 7, green is connected to pin 2, blue is connected to ground and black is connected to pin 10")
+            return 1
     def initialize_trigger_control_hardware(self):
         """Enables Hardware trigger"""
         self._cam.TriggerMode.SetValue(PySpin.TriggerMode_Off)  
@@ -96,7 +98,7 @@ class FlirTriggerControl():
         for i in range(7000):
             led_status,image_result = self._capture(i)      
             if feed:
-                image_reduced= image_result#self.reduce_image_quality(image_result)
+                image_reduced=self.reduce_image_quality(image_result)
                 data_queue_disp.put((led_status,image_reduced))
             if record:
                 data_queue_write.put((str(i),image_result))
