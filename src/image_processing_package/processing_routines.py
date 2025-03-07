@@ -42,6 +42,9 @@ class Processing():
         Returns:
             _type_: _description_
         """
+        print(image_blue.shape)
+        print(image_green.shape)
+        print(image_red.shape)
         return np.stack((image_blue,image_green,image_red),axis=-1)
 
     @staticmethod

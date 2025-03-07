@@ -48,7 +48,7 @@ class H5FormatRead():
         """        
         with File(path, 'r') as h5_file:
             image = np.array(h5_file[index])
-        return image   
+        return image
     @staticmethod
     def get_multi_read_obj(path:str):
          file =  File(path, 'r',swmr=True) 
@@ -72,7 +72,8 @@ class H5FormatRead():
         cv2.imshow("image",image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-        
+
+   
 
         
 

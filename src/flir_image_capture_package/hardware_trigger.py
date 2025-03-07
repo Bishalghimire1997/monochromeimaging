@@ -6,6 +6,7 @@ from PySpin import Camera
 import cv2
 import h5py
 from flir_camera_parameter_package.flir_camera_shutter_parameters import ShutterTimeControl
+from image_processing_package.detect_changed_object import DetectChanges
 from image_processing_package.processing_routines import Processing
 from flir_camera_parameter_package .flir_camera_parameters import FlirCamParam
 from flir_image_capture_package.arduino_control import ArduinoControl
@@ -14,7 +15,7 @@ class FlirTriggerControl():
     """Sets the camera to trigger mode"""
     def __init__(self,param:FlirCamParam):
         self._param= param
-        self.shutter =2000
+        self.shutter = 1000
         self._system= PySpin.System.GetInstance()
         self._cam:Camera = self._system.GetCameras()[0]
         self._cam.Init()
@@ -95,7 +96,7 @@ class FlirTriggerControl():
         if record:
             writer_process.daemon = True
             writer_process.start()
-        for i in range(7000):
+        for i in range(3000):
             led_status,image_result = self._capture(i)      
             if feed:
                 image_reduced=self.reduce_image_quality(image_result)
@@ -124,6 +125,7 @@ class FlirTriggerControl():
                 if int(itter) % 100 == 0:
                     h5_file.flush()
     def __display_images(self, data_queue):
+        self.count = 0
         while self.thr:
             images_batch = []
             image_flag = []
@@ -135,9 +137,10 @@ class FlirTriggerControl():
                 images_batch.append(image)
                 image_flag.append(flag)
             if images_batch:
-                image = self.__processing(image_flag, images_batch)
+                image = self.__processing(image_flag, images_batch,self.count,correction=True)
                 cv2.imshow('stream', image)
                 cv2.waitKey(1)
+            self.count += 1  
         cv2.destroyAllWindows()
 
     def reduce_image_quality(self, image):
@@ -146,15 +149,22 @@ class FlirTriggerControl():
             image: The image captured by the camera.
         Returns:
             A reduced-quality version of the image."""
-        reduced_image = cv2.resize(image, (640, 480), interpolation=cv2.INTER_LINEAR)
+        reduced_image = cv2.resize(image, (480, 350), interpolation=cv2.INTER_LINEAR)
         return reduced_image
 
-    def __processing(self,flag:list,image_batch):
+    def __processing(self,flag:list,image_batch,i,correction):
         b= flag.index(0)
         g= flag.index(1)
-        r= flag.index(2)        
-        image = cv2.merge([image_batch[b],image_batch[g],image_batch[r]])     
-        return image    
+        r= flag.index(2)
+        if correction:    
+            if i == 0:
+                self.result = DetectChanges.update_keypoints([image_batch[b],image_batch[g],image_batch[r]],detector_type="SIFT")
+                image= [image_batch[b],image_batch[g],image_batch[r]]
+            else:
+                image,self.result = DetectChanges.run([image_batch[b],image_batch[g],image_batch[r]],i,self.result) 
+            return cv2.merge(image)
+        else:
+            return cv2.merge([image_batch[b],image_batch[g],image_batch[r]])  
 
     def _capture(self,i):
         if i == 0:

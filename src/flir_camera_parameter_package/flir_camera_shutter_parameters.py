@@ -20,7 +20,7 @@ class ShutterTimeControl():
             return cam
         cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
         return cam
-    def manual_shutter(self,cam:Camera,shutter_value:int):
+    def  manual_shutter(self,cam:Camera,shutter_value:int):
         """Sets the sutter open time manually to the camera instance
 
         Args:
@@ -36,5 +36,6 @@ class ShutterTimeControl():
         if cam.ExposureAuto.GetAccessMode() != PySpin.RW:
             return cam
         cam.ExposureTime.SetValue( min(cam.ExposureTime.GetMax(), shutter_value))
+        print("Shutter Time set to:",cam.ExposureTime.GetValue())
         return cam
     
