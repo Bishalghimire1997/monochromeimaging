@@ -9,6 +9,7 @@ def run_test():
     saveblue= H5FromatWrite("blue1",override=False)
     savegreen = H5FromatWrite("green1",override=False)
     savered = H5FromatWrite("red1",override=False)
+    detector_type = "ORB"
     for i in range(100):
         
         b = str(var)
@@ -20,10 +21,10 @@ def run_test():
         red = read_imaegs.read_files("image.h5",r)
         blue = read_imaegs.read_files("image.h5",b)
         if i ==0:
-             result = DetectChanges.update_keypoints([blue,green,red],detector_type="SIFT")
+             result = DetectChanges.update_keypoints([blue,green,red],detector_type)
              image = [blue,green,red]
         else:
-            image,result = dc.run([blue,green,red],i,result)
+            image,result = dc.run([blue,green,red],i,result,detector_type)
         saveblue.record_images(image[0],str(i))
         savegreen.record_images(image[1],str(i))
         savered.record_images(image[2],str(i))

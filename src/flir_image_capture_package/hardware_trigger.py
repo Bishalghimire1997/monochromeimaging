@@ -15,7 +15,7 @@ class FlirTriggerControl():
     """Sets the camera to trigger mode"""
     def __init__(self,param:FlirCamParam):
         self._param= param
-        self.shutter = 1000
+        self.shutter = self._param.shutter_time
         self._system= PySpin.System.GetInstance()
         self._cam:Camera = self._system.GetCameras()[0]
         self._cam.Init()
@@ -46,11 +46,11 @@ class FlirTriggerControl():
         chunk_data = image.GetChunkData()
         end_line_status = chunk_data.GetExposureEndLineStatusAll()
         sys.stdout.flush()
-        if end_line_status == 5:
+        if end_line_status == 4:
             return 1
-        elif end_line_status == 9:
+        elif end_line_status == 8:
             return 0
-        elif end_line_status == 13:
+        elif end_line_status == 12:
             return 2
         else:
             return 1
@@ -75,7 +75,7 @@ class FlirTriggerControl():
             stream_buffer_count_mode.GetEntryByName('Manual'))
         stream_buffer_count_mode.SetIntValue(stream_buffer_count_mode_manual.GetValue())
         buffer_count = PySpin.CIntegerPtr(s_node_map.GetNode('StreamBufferCountManual'))
-        buffer_count.SetValue(1)
+        buffer_count.SetValue(5)
         handling_mode_entry = handling_mode.GetEntryByName('NewestOnly')
         handling_mode.SetIntValue(handling_mode_entry.GetValue())
 
@@ -96,7 +96,7 @@ class FlirTriggerControl():
         if record:
             writer_process.daemon = True
             writer_process.start()
-        for i in range(3000):
+        for i in range(self._param.snap_count):
             led_status,image_result = self._capture(i)      
             if feed:
                 image_reduced=self.reduce_image_quality(image_result)
@@ -137,7 +137,7 @@ class FlirTriggerControl():
                 images_batch.append(image)
                 image_flag.append(flag)
             if images_batch:
-                image = self.__processing(image_flag, images_batch,self.count,correction=True)
+                image = self.__processing(image_flag, images_batch,self.count,correction = True)
                 cv2.imshow('stream', image)
                 cv2.waitKey(1)
             self.count += 1  
@@ -153,15 +153,26 @@ class FlirTriggerControl():
         return reduced_image
 
     def __processing(self,flag:list,image_batch,i,correction):
-        b= flag.index(0)
-        g= flag.index(1)
-        r= flag.index(2)
+        detector_list=["SIFT","SURF","ORB","FAST","BRISK","AKAZE","KAZE","MSER","AGAST"]
+
+        detector_type=detector_list[1]
+        match_type="KNN"
+        try:
+            b= flag.index(0)
+            g= flag.index(1)
+            r= flag.index(2)
+        except ValueError:
+            print("this frame Not sync properly")
+            b=0
+            g=1
+            r=2
+        
         if correction:    
             if i == 0:
-                self.result = DetectChanges.update_keypoints([image_batch[b],image_batch[g],image_batch[r]],detector_type="SIFT")
+                self.result = DetectChanges.update_keypoints([image_batch[b],image_batch[g],image_batch[r]],detector_type)
                 image= [image_batch[b],image_batch[g],image_batch[r]]
             else:
-                image,self.result = DetectChanges.run([image_batch[b],image_batch[g],image_batch[r]],i,self.result) 
+                image,self.result = DetectChanges.run([image_batch[b],image_batch[g],image_batch[r]],i,self.result,detector_type,match_type) 
             return cv2.merge(image)
         else:
             return cv2.merge([image_batch[b],image_batch[g],image_batch[r]])  

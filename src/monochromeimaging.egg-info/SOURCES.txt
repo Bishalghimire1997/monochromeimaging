@@ -8,9 +8,11 @@ flir_image_capture_package/hardware_trigger.py
 flir_image_capture_package/software_trigger.py
 h5_file_format_package/__init__.py
 h5_file_format_package/h5_format.py
+image_processing_package/Compute_color_difference.py
 image_processing_package/__init__.py
 image_processing_package/detect_changed_object.py
 image_processing_package/frame_pattern_allignment_state.py
+image_processing_package/parallel_sift.py
 image_processing_package/processing_routines.py
 image_processing_package/tracking.py
 monochromeimaging.egg-info/PKG-INFO

@@ -1,0 +1,5 @@
+Camera setup:
+Camera was set to hardware trigger mode and the exposour time was set to 1800 nano second.
+The camera was placed in a dark room. The only light source was the color LED. 
+total of 500 images of the same color chart was take and one sample was selected for the experiment.
+

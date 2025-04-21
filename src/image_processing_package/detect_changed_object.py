@@ -1,3 +1,4 @@
+
 import cv2
 import numpy as np
 from h5_file_format_package.h5_format import H5FromatWrite
@@ -15,17 +16,23 @@ class DetectChanges():
         filtered_matches = sorted_matches[:n]
         return filtered_matches
     @staticmethod
-    def check_for_match_second(input_image_descriptor,input_image_key_points,target_image_discriptor,target_image_key_points):
-        brute_force_object= cv2.BFMatcher()
-        target_ref_matches =  brute_force_object.knnMatch(input_image_descriptor,
-                                                          target_image_discriptor,k=4)
-        good = []
-        for m,n,o,p in target_ref_matches:
-            if m.distance < 0.8*n.distance:
-                good.append(m)
-
-        #target_ref_matches = update_matches(target_ref_matches,500)
-        return [input_image_key_points,target_image_key_points,input_image_descriptor,target_image_discriptor,good]
+    def check_for_match_second(input_image_descriptor,input_image_key_points,target_image_discriptor,target_image_key_points,matching_algorithm="KNN"):
+       good = []
+       if matching_algorithm == "KNN":
+           brute_force_object= cv2.BFMatcher()
+           target_ref_matches =  brute_force_object.knnMatch(input_image_descriptor,target_image_discriptor,k=2)
+       if matching_algorithm == "FLANN":
+            index_params = dict(algorithm=0, trees=5)
+            search_params = dict(checks=50)
+            flann = cv2.FlannBasedMatcher(index_params, search_params)
+            target_ref_matches = flann.knnMatch(input_image_descriptor, target_image_discriptor, k=2)
+      
+       for m in target_ref_matches:
+            if len(m)>=2 and m[0].distance <= 0.5*m[1].distance:
+                good.append(m[0])
+       #print(len(good))
+       target_ref_matches = good
+       return [input_image_key_points,target_image_key_points,input_image_descriptor,target_image_discriptor,target_ref_matches]
     @staticmethod
     def draw_match(input_image,input_image_key_points,input_image_descriptor,target_image,
                    target_image_key_points,target_image_discriptor,target_ref_matches):
@@ -39,37 +46,38 @@ class DetectChanges():
   
         pass
     @staticmethod
-    def detect_feature(image, roi=None, detector_type="SIFT"):
+    def detect_feature(image,detector_type):
         """
         Detects features in an image using the specified feature detector.
     """
     # Initialize the detector based on the detector_type
         if detector_type == "SIFT":
-           #detector = ParallelSift()
+           print("SIFT")
            detector = cv2.SIFT_create()
         elif detector_type == "SURF":
-            detector = cv2.xfeatures2d.SURF_create(500) if 'xfeatures2d' in dir(cv2) else None
+            print("SURF")
+            detector = cv2.xfeatures2d.SURF_create()
         elif detector_type == "ORB":
+            print("ORB")
             detector = cv2.ORB_create()
         elif detector_type == "FAST":
-            detector = cv2.FastFeatureDetector_create(500)
+            print("FAST")
+            detector = cv2.FastFeatureDetector_create()
         elif detector_type == "BRISK":
-            detector = cv2.BRISK_create(500)
+            print("BRISK")
+            detector = cv2.BRISK_create()
         elif detector_type == "AKAZE":
-            detector = cv2.AKAZE_create(descriptor_type=cv2.AKAZE_DESCRIPTOR_MLDB,  # Default, but can be reduced to reduce computation
-    descriptor_size=0,  # Default, keep small to reduce computation
-    descriptor_channels=3,  # Reduce channels if needed
-    threshold=0.002,  # Increase threshold (default is 0.001) to detect fewer keypoints
-    nOctaves=2,  # Reduce octaves (default is 4), fewer scales = faster computation
-    nOctaveLayers=2,  # Reduce octave layers (default is 4)
-    diffusivity=cv2.KAZE_DIFF_PM_G2  # Keep default for speed
-    )
+            print("AKAZE")
+            detector = cv2.AKAZE_create(descriptor_type=cv2.AKAZE_DESCRIPTOR_MLDB)
         elif detector_type == "KAZE":
-            detector = cv2.KAZE_create(500)
+            print("KAZE")
+            detector = cv2.KAZE_create()
         elif detector_type == "MSER":
-            detector = cv2.MSER_create(500)
+            print("MSER")
+            detector = cv2.MSER_create()
         elif detector_type == "AGAST":
-            detector = cv2.AgastFeatureDetector_create(500)
+            print("AGAST")
+            detector = cv2.AgastFeatureDetector_create()
 
 
         else:
@@ -132,7 +140,7 @@ class DetectChanges():
         
     #     return kp_dserial
     @staticmethod
-    def update_keypoints(images:list,detector_type="SIFT"):
+    def update_keypoints(images:list,detector_type):
         # image_list = []
         # for i in images:
         #     image_list.append(DetectChanges.reduce_image_quality(i))
@@ -233,7 +241,7 @@ class DetectChanges():
   
     @staticmethod
     def transform(input_image,input_image_key_points,target_image_key_points,target_ref_matches,scale_factor):
-        transformatoion_matrix= DetectChanges.compute_homography(input_image_key_points,
+        transformatoion_matrix= DetectChanges.compute_affin(input_image_key_points,
                                                                  target_image_key_points,target_ref_matches,scale_factor)
         transformed = DetectChanges.apply_afine(input_image,transformatoion_matrix)
         return transformed
@@ -246,7 +254,7 @@ class DetectChanges():
         return transformed
 
     @staticmethod
-    def compute_homography(input_keypoints,target_keypoints,matches,scale_factor):
+    def compute_affin(input_keypoints,target_keypoints,matches,scale_factor):
         input_points = []
         target_points = []
         for i in matches:
@@ -344,10 +352,10 @@ class DetectChanges():
         reduced_image = cv2.resize(image.copy(), (int(height/4), int(width/4)), interpolation=cv2.INTER_CUBIC)
         return reduced_image
     @staticmethod
-    def run(all_new_images,i,result):        
+    def run(all_new_images,i,result,detector_type,match_type):        
         dec_ch = DetectChanges()
         if i ==0:
-            updated_value = DetectChanges.update_keypoints(all_new_images,detector_type="SIFT")
+            updated_value = DetectChanges.update_keypoints(all_new_images,detector_type)
             result = updated_value
         blue_image_key_points,blue_image_descriptor = result[0]
         green_image_key_points,green_image_descriptor = result[1]
@@ -355,13 +363,13 @@ class DetectChanges():
 
         param=dec_ch.check_for_match_second(blue_image_descriptor,
                                             blue_image_key_points,green_image_descriptor,
-                                            green_image_key_points)
+                                            green_image_key_points,matching_algorithm=match_type)
         
         
         
         green= dec_ch.transform(all_new_images[1],param[0],param[1],param[4],scale_factor=1)
         param= dec_ch.check_for_match_second(blue_image_descriptor,blue_image_key_points
-                                             ,red_image_descriptor,red_image_key_points)
+                                             ,red_image_descriptor,red_image_key_points,matching_algorithm=match_type)
         
         red= dec_ch.transform(all_new_images[2],param[0],param[1],param[4],scale_factor=1)
 

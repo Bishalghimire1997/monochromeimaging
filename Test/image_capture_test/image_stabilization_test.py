@@ -150,5 +150,5 @@ def correct_background():
 #         return reduced_image
         
 if __name__ == '__main__':
-    play_images_as_video(1)
+    play_images_as_video(1) 
 
