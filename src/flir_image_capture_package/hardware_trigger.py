@@ -4,6 +4,7 @@ import queue
 import PySpin
 from PySpin import Camera 
 import cv2
+from image_processing_package.opt_flow import Flow
 import h5py
 from flir_camera_parameter_package.flir_camera_shutter_parameters import ShutterTimeControl
 from image_processing_package.detect_changed_object import DetectChanges
@@ -24,6 +25,7 @@ class FlirTriggerControl():
         self._cam.AcquisitionMode.SetValue(PySpin.AcquisitionMode_Continuous)
         self.ard= ArduinoControl()
         self.ard.stop()
+        self._flow_obj = Flow()
         self.thr = True
     def chunk_enable(self):
         """Enables all the writeable chunk features"""
@@ -137,7 +139,7 @@ class FlirTriggerControl():
                 images_batch.append(image)
                 image_flag.append(flag)
             if images_batch:
-                image = self.__processing(image_flag, images_batch,self.count,correction = True)
+                image = self.__processing_opt(image_flag, images_batch,self.count,correction = True)
                 cv2.imshow('stream', image)
                 cv2.waitKey(1)
             self.count += 1  
@@ -151,11 +153,28 @@ class FlirTriggerControl():
             A reduced-quality version of the image."""
         reduced_image = cv2.resize(image, (480, 350), interpolation=cv2.INTER_LINEAR)
         return reduced_image
+    def __processing_opt(self,flag:list,image_batch,i,correction):
+            try:
+                b= flag.index(0)
+                g= flag.index(1)
+                r= flag.index(2)
+            except ValueError:
+                print("this frame Not sync properly")
+                b=0
+                g=1
+                r=2
+            fixed = image_batch[b]
+            floating = [image_batch[g],image_batch[r]]
+            if correction:
+                result = self._flow_obj.compute(fixed,floating)
+            else :
+                result = [image_batch[b],image_batch[g],image_batch[r]]
+            return cv2.merge(result)
 
     def __processing(self,flag:list,image_batch,i,correction):
         detector_list=["SIFT","SURF","ORB","FAST","BRISK","AKAZE","KAZE","MSER","AGAST"]
 
-        detector_type=detector_list[1]
+        detector_type=detector_list[0]
         match_type="KNN"
         try:
             b= flag.index(0)

@@ -25,10 +25,10 @@ class DetectChanges():
             index_params = dict(algorithm=0, trees=5)
             search_params = dict(checks=50)
             flann = cv2.FlannBasedMatcher(index_params, search_params)
-            target_ref_matches = flann.knnMatch(input_image_descriptor, target_image_discriptor, k=2)
+            target_ref_matches = flann.knnMatch(input_image_descriptor, target_image_discriptor, k=4)
       
        for m in target_ref_matches:
-            if len(m)>=2 and m[0].distance <= 0.5*m[1].distance:
+            if len(m)>=2 and m[0].distance <= 0.8*m[1].distance:
                 good.append(m[0])
        #print(len(good))
        target_ref_matches = good
