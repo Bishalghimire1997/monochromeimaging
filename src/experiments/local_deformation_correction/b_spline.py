@@ -32,7 +32,7 @@ def estimate_global_homography(ref_img, float_img):
     return aligned, H
 
 # Step 2: Coarse Local Registration using Piecewise Affine Mesh (Simplified)
-def coarse_mesh_registration(ref_img, float_img, grid_size=2):
+def coarse_mesh_registration(ref_img, float_img, grid_size=20):
     rows, cols = ref_img.shape
     src_cols = np.linspace(0, cols, grid_size)
     src_rows = np.linspace(0, rows, grid_size)

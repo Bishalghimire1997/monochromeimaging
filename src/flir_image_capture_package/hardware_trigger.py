@@ -4,7 +4,7 @@ import queue
 import PySpin
 from PySpin import Camera 
 import cv2
-from image_processing_package.opt_flow import Flow
+from image_processing_package.opt_flow import FlowGPU
 import h5py
 from flir_camera_parameter_package.flir_camera_shutter_parameters import ShutterTimeControl
 from image_processing_package.detect_changed_object import DetectChanges
@@ -25,7 +25,7 @@ class FlirTriggerControl():
         self._cam.AcquisitionMode.SetValue(PySpin.AcquisitionMode_Continuous)
         self.ard= ArduinoControl()
         self.ard.stop()
-        self._flow_obj = Flow()
+        self._flow_obj = FlowGPU()
         self.thr = True
     def chunk_enable(self):
         """Enables all the writeable chunk features"""
@@ -166,10 +166,11 @@ class FlirTriggerControl():
             fixed = image_batch[b]
             floating = [image_batch[g],image_batch[r]]
             if correction:
-                result = self._flow_obj.compute(fixed,floating)
+                result = self._flow_obj.optical_flow_impl_gpu_parallel(image_batch[b],image_batch[g],image_batch[r])
             else :
                 result = [image_batch[b],image_batch[g],image_batch[r]]
-            return cv2.merge(result)
+                result = cv2.merge(result)
+            return result
 
     def __processing(self,flag:list,image_batch,i,correction):
         detector_list=["SIFT","SURF","ORB","FAST","BRISK","AKAZE","KAZE","MSER","AGAST"]
