@@ -72,19 +72,19 @@ def fine_registration(ref_img, float_img):
 
         return warped
 
-def optical_flow_impl():
+def optical_flow_impl(images):
     img = cv2.imread('test.png')
-    ref = img[:, :, 0]  # Reference image (first channel)
-    compute_histogram(ref,"ref")
-    print(ref.shape)
-    print(ref.dtype)
-    floating1 = img[:, :, 1]  # Floating image (second channel)
-    compute_histogram(floating1,"green_before")
-    floating2 = img[:, :, 2]  # Floating image (third channel)
-    compute_histogram(floating2,"red_before")
-    cv2.imshow('ref', ref)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    ref = img[0]  # Reference image (first channel)
+    #compute_histogram(ref,"ref")
+    #print(ref.shape)
+    #print(ref.dtype)
+    floating1 = img[1]  # Floating image (second channel)
+    #compute_histogram(floating1,"green_before")
+    floating2 = img[2]  # Floating image (third channel)
+    #compute_histogram(floating2,"red_before")
+    #cv2.imshow('ref', ref)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
 
     aligned_global1, H1 = estimate_global_homography(ref, floating1)
     aligned_global2, H2 = estimate_global_homography(ref, floating2)
@@ -96,8 +96,8 @@ def optical_flow_impl():
     aligned_fine2 = fine_registration(ref, aligned_coarse2)
     aligned_fine1 =  (aligned_fine1 * 255).clip(0, 255).astype(np.uint8)
     aligned_fine2 = (aligned_fine2 * 255).clip(0, 255).astype(np.uint8)
-    compute_histogram(aligned_fine1,"green_after")
-    compute_histogram(aligned_fine2,"red_after")
+    #compute_histogram(aligned_fine1,"green_after")
+    #compute_histogram(aligned_fine2,"red_after")
 
     
     cv2.imshow('aligned_coarse1', aligned_coarse1)

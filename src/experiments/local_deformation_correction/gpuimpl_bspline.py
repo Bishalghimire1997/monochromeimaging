@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from concurrent.futures import ThreadPoolExecutor
 import multiprocessing as mp
+from image_processing_package.Color_augmentation import ColorAugmentation
 from skimage.transform import PiecewiseAffineTransform, warp
 
 # ---------------- GPU Optical Flow Wrapper ---------------- #
@@ -14,6 +15,7 @@ class Flow:
         self.tvl1 .setLambda(lambda_)
         self.tvl1 .setTheta(theta)
         self.tvl1 .setEpsilon(epsilon)   
+       
 
     def compute_flow(self, images):
         fi=cv2.GaussianBlur(images[0], (5, 5), 100)
@@ -89,39 +91,47 @@ def compute_histogram(image, title='Histogram'):
     plt.xlim([0, 255])
     plt.show()
     return hist
+def augment_saturation(image):
+    hsv=cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
+    hsv[:,:,1]= 0
+    gray_bgr=cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
 
-# ---------------- Main Pipeline ---------------- #
+    return gray_bgr
+
+
+# ---------------- Main Pipeline ---------------- #        
 
 def optical_flow_impl_gpu_parallel():
+    aug=ColorAugmentation()
     img = cv2.imread('test.png')
-    if img is None:
-        raise FileNotFoundError("test.png not found.")
+    ref =cv2.imread('bw.png')
+    augmented_ref= aug.apply_reinhard_transfer(ref, img, color_space="LAB")
+    blue_c, green_c, red_c = cv2.split(img)
+    blue, green, red = cv2.split(augmented_ref)
 
-    blue = img[:, :, 0]
-    green = img[:, :, 1]
-    red = img[:, :, 2]
+
 
     #compute_histogram(blue, "Blue (Ref)")
     #compute_histogram(green, "Green Before")
     #compute_histogram(red, "Red Before")
 
-    flow_engine1 = Flow(numbItterations=2, tau=4, lambda_=0.5, theta=0.06, epsilon=1e-3)
-    flow_engine2 = Flow(numbItterations=2, tau=4, lambda_=0.5, theta=0.05, epsilon=1e-5)
+    flow_engine1 = Flow(numbItterations=1, tau=1, lambda_=0.1, theta=0.06, epsilon=1e-3)
+    flow_engine2 = Flow(numbItterations=1, tau=1, lambda_=0.1, theta=0.06, epsilon=1e-5)
     
 
     with ThreadPoolExecutor(max_workers=2) as executor:
-        future_g = executor.submit(flow_engine1.compute_flow, [blue, green])
-        future_r = executor.submit(flow_engine2.compute_flow, [blue, red])
+        future_g = executor.submit(flow_engine1.compute_flow, [blue_c, green_c])
+        future_r = executor.submit(flow_engine2.compute_flow, [green_c, red_c])
 
         flow_g = future_g.result()
         flow_r = future_r.result()
   
     #coarse registration
-    coarse_g = coarse_mesh_registration_gpu(np.copy(blue), np.copy(green), flow_g)
-    coarse_r = coarse_mesh_registration_gpu(np.copy(blue), np.copy(red), flow_r)
+    coarse_g = coarse_mesh_registration_gpu(np.copy(blue_c), np.copy(green_c), flow_g)
+    coarse_r = coarse_mesh_registration_gpu(np.copy(blue_c), np.copy(red_c), flow_r)
     # Fine registration
-    fine_g = fine_registration_gpu(np.copy(blue), coarse_g, flow_g)
-    fine_r = fine_registration_gpu(np.copy(blue), coarse_r, flow_r)
+    fine_g = fine_registration_gpu(np.copy(blue_c), coarse_g, flow_g)
+    fine_r = fine_registration_gpu(np.copy(blue_c), coarse_r, flow_r)
 
     fine_g = (fine_g * 255).clip(0, 255).astype(np.uint8)
     fine_r = (fine_r * 255).clip(0, 255).astype(np.uint8)
@@ -131,9 +141,55 @@ def optical_flow_impl_gpu_parallel():
 
     cv2.imshow('Aligned Green', fine_g)
     cv2.imshow('Aligned Red', fine_r)
-    cv2.imshow('Final RGB', cv2.merge([blue, fine_g, fine_r]))
+    cv2.imshow('Final RGB', cv2.merge([blue_c, fine_g, fine_r]))
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+def generate_gaussian_noisy_bgr_variants(height, width, mean=127, std=40):
+        """
+        Generate three noisy BGR images using Gaussian distribution 
+        with one color channel set to zero in each.
+
+        Parameters:
+            height (int): Image height
+            width (int): Image width
+            mean (int): Mean of the normal distribution
+            std (int): Standard deviation of the normal distribution
+
+        Returns:
+            tuple: Three NumPy arrays of shape (H, W, 3) in BGR format
+        """
+        # Generate noise with normal distribution and clip to [0, 255]
+        noise = np.random.normal(loc=mean, scale=std, size=(height, width)).astype(np.float32)
+        noise = np.clip(noise, 0, 255).astype(np.uint8)
+
+        # Construct three BGR images with one zeroed channel each
+        bgr_red_zero = np.stack([noise, noise, np.zeros_like(noise)], axis=2)   # Red = 0
+        bgr_green_zero = np.stack([noise, np.zeros_like(noise), noise], axis=2) # Green = 0
+        bgr_blue_zero = np.stack([np.zeros_like(noise), noise, noise], axis=2)  # Blue = 0
+
+        return bgr_red_zero, bgr_green_zero, bgr_blue_zero
+def isolate_channel(image, index):
+    """
+    Given a BGR image and a channel index (0=Blue, 1=Green, 2=Red),
+    return a BGR image with only that channel and others dark.
+
+    Parameters:
+        image (np.ndarray): Input BGR image.
+        index (int): Channel index to preserve (0, 1, or 2).
+
+    Returns:
+        np.ndarray: Output image with only the selected channel.
+    """
+    if index not in [0, 1, 2]:
+        raise ValueError("Index must be 0 (Blue), 1 (Green), or 2 (Red).")
+    
+    # Create a zero image of same shape
+    dark_image = np.zeros_like(image)
+
+    # Copy only the selected channel
+    dark_image[:, :, 0] = image[:, :, index]
+
+    return dark_image
 # ---------------- Run ---------------- #
 
 if __name__ == "__main__":
