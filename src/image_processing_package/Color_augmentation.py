@@ -9,7 +9,7 @@ class ColorAugmentation:
         std = np.std(image, axis=(0, 1))
         return avg, std
 
-    def apply_reinhard_transfer(self,source, target, color_space="HSV"):
+    def apply_reinhard_transfer(self,source, target, color_space="LAB"):
         if color_space == "LAB":
             source = cv2.cvtColor(source, cv2.COLOR_BGR2LAB)
             target = cv2.cvtColor(target, cv2.COLOR_BGR2LAB)
