@@ -7,7 +7,7 @@ from processing_using_raft.utils import InputPadder, forward_interpolate
 from processing_using_raft.raft import RAFT
 class ChannelReg():
     def __init__(self):
-        self.__model_path ="C://Users//SIU856587710//Git//monochromeimaging//src//processing_using_raft//trial.pth"
+        self.__model_path ="C://Users//SIU856587710//Git//monochromeimaging//src//processing_using_raft//z.pth"
         self.__use_small = False
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = self.__load_model(self.__model_path, self.__use_small)
@@ -30,7 +30,7 @@ class ChannelReg():
 
     @torch.no_grad()
     def __load_model(self, model_path, use_small):
-        args = argparse.Namespace(small=use_small, mixed_precision=True, alternate_corr=True)
+        args = argparse.Namespace(small=use_small, mixed_precision=True, alternate_corr=False)
         model = RAFT(args)
         model = torch.nn.DataParallel(model)
         checkpoint = torch.load(model_path, map_location=self.device)
@@ -178,12 +178,13 @@ class ChannelReg():
         img1_batch, img2_batch = padder.pad(img1_batch, img2_batch)
 
         # Inference
-        _, flow_preds = self.model(img1_batch, img2_batch, iters=150, test_mode=True)
+        _, flow_preds = self.model(img1_batch, img2_batch, iters=100 , test_mode=True)
 
         # Unpad and convert to list of numpy arrays
-        flows = []
+        flows = [] 
         for b in range(batch_size):
             flow = padder.unpad(flow_preds[b]).permute(1, 2, 0).detach().cpu().numpy()
             flows.append(flow)
         return flows
+
 

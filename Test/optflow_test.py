@@ -16,7 +16,6 @@ def test_compute_flow():
     transformed1 = fl_obj.apply_transformation(np.copy(g),flow1)
     transformed2 = fl_obj.apply_transformation(np.copy(r),flow2)
     print("transformed2 shape",transformed2)
-    
     # Converting transformed images to uint8
     transformed1 = (transformed1 * 255).clip(0, 255).astype(np.uint8)
     transformed2 = (transformed2 * 255).clip(0, 255).astype(np.uint8)

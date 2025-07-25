@@ -1,4 +1,6 @@
 setup.py
+experiments/__init__.py
+experiments/static_image_feture_detection.py
 flir_camera_parameter_package/__init__.py
 flir_camera_parameter_package/flir_camera_parameters.py
 flir_camera_parameter_package/flir_camera_shutter_parameters.py
@@ -8,10 +10,12 @@ flir_image_capture_package/hardware_trigger.py
 flir_image_capture_package/software_trigger.py
 h5_file_format_package/__init__.py
 h5_file_format_package/h5_format.py
+image_processing_package/Color_augmentation.py
 image_processing_package/Compute_color_difference.py
 image_processing_package/__init__.py
 image_processing_package/detect_changed_object.py
 image_processing_package/frame_pattern_allignment_state.py
+image_processing_package/opt_flow.py
 image_processing_package/parallel_sift.py
 image_processing_package/processing_routines.py
 image_processing_package/tracking.py

@@ -89,24 +89,26 @@ def play_images_as_video( fps=20.0):
             break
     cv2.destroyAllWindows()
 
-def play_images_as_video1( fps=20.0):
-    """" Plays the corrected frams as a video"""
+def play_images_as_video1(path = "image.h5", fps=20.0):
+    """" Plays the corrected frams as a video""" 
     obj2 = H5FormatRead()
     var=0
     imagetransformed=[]
-    for i in range(100):
+    for i in range(150):
         b1= var
         b2 = var+1
         b3 = var+2
         var=var+3
-        b= obj2.read_files("image.h5",str(b1))
-        g= obj2.read_files("image.h5",str(b2))
-        r=obj2.read_files("image.h5",str(b3))
+        b= obj2.read_files(path,str(b1))
+        g= obj2.read_files(path,str(b2))
+        r=obj2.read_files(path,str(b3))
         imagetransformed.append(Processing.image_reconstruction(b,g,r))                                                                
     delay = int(1000 / fps)
     for image in imagetransformed:
+        cv2.namedWindow('Image Stream', cv2.WINDOW_NORMAL)
+        cv2.setWindowProperty('Image Stream', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         cv2.imshow('Image Stream', image)
-        if cv2.waitKey(delay) & 0xFF == ord('q'):
+        if cv2.waitKey(0) & 0xFF == ord('q'):
             print("Playback interrupted.")
             break
     cv2.destroyAllWindows()
@@ -139,7 +141,7 @@ def correct_background():
     DetectChanges.reconstruct_background(blue_t,red_t,green_t,blue_o,green_o,red_o,roi)
 # def reduce_image_quality(image):
 #         """Reduces the quality of the image for smoother display.
-#         Args:
+#         Args:               
 #             image: The image captured by the camera.
 #         Returns:
 #             A reduced-quality version of the image."""
@@ -150,5 +152,5 @@ def correct_background():
 #         return reduced_image
         
 if __name__ == '__main__':
-    play_images_as_video(1) 
+    play_images_as_video1("image.h5",20)
 

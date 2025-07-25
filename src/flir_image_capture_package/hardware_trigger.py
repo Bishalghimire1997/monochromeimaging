@@ -122,7 +122,8 @@ class FlirTriggerControl():
                 if item is None:
                     self.thr = False
                     break
-                itter, image = item
+                itter, image= item
+                
                 h5_file.create_dataset(itter, data=image)
                 if int(itter) % 100 == 0:
                     h5_file.flush()
@@ -139,7 +140,7 @@ class FlirTriggerControl():
                 images_batch.append(image)
                 image_flag.append(flag)
             if images_batch:
-                image = self.__processing_opt(image_flag, images_batch,self.count,correction = True)
+                image = self.__processing_opt(image_flag, images_batch,self.count,correction = False)
                 cv2.imshow('stream', image)
                 cv2.waitKey(1)
             self.count += 1  

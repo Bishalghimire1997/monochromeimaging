@@ -7,7 +7,7 @@ def hardware_trigger_test():
     """hardware trigger test"""    
     param= FlirCamParam()
     obj = FlirTriggerControl(param)
-    obj.capture(feed = True,record=False)
+    obj.capture (feed = True,record=True)
 def software_trigger_test():
     """software trigger test""" 
     param= FlirCamParam()
@@ -15,4 +15,5 @@ def software_trigger_test():
     obj.capture()
 if __name__ == "__main__":
     hardware_trigger_test()
+    
     

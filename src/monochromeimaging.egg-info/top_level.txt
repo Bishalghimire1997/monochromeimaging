@@ -1,3 +1,4 @@
+experiments
 flir_camera_parameter_package
 flir_image_capture_package
 h5_file_format_package

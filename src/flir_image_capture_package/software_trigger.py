@@ -11,7 +11,7 @@ from thors_lab_led_control_package.led_state_pulse import StateMachinePulse
 class FlirTriggerControl():
     def __init__(self,param:FlirCamParam):
         self._param= param
-        self.shutter = 50000
+        self.shutter = 5000
         self._system= PySpin.System.GetInstance()
         self._cam:Camera = self._system.GetCameras()[0]
         self._cam.Init()
