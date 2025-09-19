@@ -11,15 +11,44 @@ from thors_lab_led_control_package.led_state_pulse import StateMachinePulse
 class FlirTriggerControl():
     def __init__(self,param:FlirCamParam):
         self._param= param
-        self.shutter = 5000
+        self.shutter = 10000
         self._system= PySpin.System.GetInstance()
         self._cam:Camera = self._system.GetCameras()[0]
-        self._cam.Init()
+        self._cam.Init()    
         self._shutter = ShutterTimeControl(self._cam)
         self._cam =self._shutter.manual_shutter(self._cam,self.shutter)       
         self._cam.AcquisitionMode.SetValue(PySpin.AcquisitionMode_Continuous)
-
+        self.set_color_image_format()
+        
         pass 
+    def set_color_image_format(self):
+        nodemap = self._cam.GetNodeMap()
+        pixel_format = PySpin.CEnumerationPtr(nodemap.GetNode("PixelFormat"))
+
+        if not PySpin.IsAvailable(pixel_format):
+            print("PixelFormat node not available")
+            return
+
+        current_entry = PySpin.CEnumEntryPtr(pixel_format.GetCurrentEntry())
+        current_name = current_entry.GetSymbolic() if current_entry else "Unknown"
+        
+        if not PySpin.IsWritable(pixel_format):
+            print(f"PixelFormat not writable. Using current: {current_name}")
+            self._is_bayer = "Bayer" in current_name
+            return
+
+        # Try preferred formats
+        for fmt in ["BGR8", "RGB8", "BayerRG8"]:
+            entry = pixel_format.GetEntryByName(fmt)
+            if entry and PySpin.IsAvailable(entry) and PySpin.IsWritable(entry):
+                pixel_format.SetIntValue(entry.GetValue())
+                print(f"PixelFormat set to {fmt}")
+                self._is_bayer = "Bayer" in fmt
+                return
+
+        print(f"No preferred writable PixelFormat found, using current: {current_name}")
+        self._is_bayer = "Bayer" in current_name
+
     def initialize_trigger_control_software(self):
         self._cam.TriggerMode.SetValue(PySpin.TriggerMode_Off)  
         self._cam.TriggerSelector.SetValue(PySpin.TriggerSelector_FrameStart)  
@@ -36,7 +65,8 @@ class FlirTriggerControl():
          handling_mode_entry = PySpin.CEnumEntryPtr(handling_mode.GetCurrentEntry())
          handling_mode_entry = PySpin.CEnumEntryPtr(handling_mode.GetCurrentEntry())
          stream_buffer_count_mode = PySpin.CEnumerationPtr(s_node_map.GetNode('StreamBufferCountMode'))
-         stream_buffer_count_mode_manual = PySpin.CEnumEntryPtr(stream_buffer_count_mode.GetEntryByName('Manual'))
+         stream_buffer_count_mode_manual = PySpin.CEnumEntryPtr(
+             stream_buffer_count_mode.GetEntryByName('Manual'))
          stream_buffer_count_mode.SetIntValue(stream_buffer_count_mode_manual.GetValue())
          buffer_count = PySpin.CIntegerPtr(s_node_map.GetNode('StreamBufferCountManual'))
          buffer_count.SetValue(1)
@@ -47,7 +77,9 @@ class FlirTriggerControl():
     def capture(self,feed = True, record = True, led_flash = False):
         self.initialize_trigger_control_software()
         self.set_to_newest_only_buffer_mode()
-        self._cam.BeginAcquisition()        
+        #self.set_color_image_format()  
+        self._cam.BeginAcquisition()    
+    
         data_queue_disp = queue.Queue() if feed else None
         data_queue_write = queue.Queue() if record else None
         state = StateMachinePulse().get_first_state() if led_flash else None
@@ -59,13 +91,12 @@ class FlirTriggerControl():
             display_thread.start()
         if record:
             writer_process.daemon = True
-            writer_process.start()
-       
+            writer_process.start()       
         time.sleep(2)       
         for i in range(500):
             if led_flash:                 
-                 state.activate()
-            image_result = self._capture(i)      
+                 state.activate() 
+            image_result = self._capture(i)                
             if feed:
                 image_reduced= self.reduce_image_quality(image_result)
                 data_queue_disp.put(("h",image_reduced))
@@ -108,7 +139,7 @@ class FlirTriggerControl():
                 images_batch.append(image)  # Append the image to the batch
                 image_flag.append(flag)
             if images_batch:
-                image = self.__processing(image_flag, images_batch)
+                #image = self.__processing(image_flag, images_batch)
                 cv2.imshow('stream', image)
                 cv2.waitKey(1)
         cv2.destroyAllWindows()  # Close all OpenCV windowss
@@ -122,19 +153,21 @@ class FlirTriggerControl():
         reduced_image = cv2.resize(image, (640, 480), interpolation=cv2.INTER_LINEAR)
         return reduced_image
 
-    def __processing(self,flag:list,image_batch):
-        b= 0#flag.index("B")
-        g= 1#flag.index("G")
-        r= 2#2flag.index("R")
-        image = cv2.merge([image_batch[g],image_batch[r],image_batch[b]])
-        #image =  Processing.corrrect_color(image,self.weight)
-        return image    
+    # def __processing(self,flag:list,image_batch):
+    #     b= 0#flag.index("B")
+    #     g= 1#flag.index("G")
+    #     r= 2#2flag.index("R")
+    #     image = cv2.merge([image_batch[g],image_batch[r],image_batch[b]])
+    #     #image =  Processing.corrrect_color(image,self.weight)
+        # return image    
 
     def _capture(self,i):    
         self._cam.TriggerSoftware.Execute()  
         self.image_result = self._cam.GetNextImage()
-        image = self.image_result.GetNDArray()
+        #self.image_result = self.image_result.Convert(PySpin.PixelFormat_BGR8, PySpin.HQ_LINEAR)
+        image= self.image_result.GetNDArray()
+        color_image  = cv2.cvtColor(image,cv2.COLOR_BAYER_BG2BGR)
         self.image_result.Release()
         
-        return image
+        return color_image
 

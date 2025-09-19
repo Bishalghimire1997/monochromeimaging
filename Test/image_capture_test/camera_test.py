@@ -14,6 +14,6 @@ def software_trigger_test():
     obj = FTC(param)
     obj.capture()
 if __name__ == "__main__":
-    hardware_trigger_test()
+   software_trigger_test()
     
     

@@ -155,7 +155,7 @@ class FlowFieldGenerationTest():
             else:
                 return self.read_from_camera1(path) 
     def run(self):
-        path = "video081"
+        path = "video081.h5"
         image1, image2 = self.read_sample(path, dataset_name="reference", number_of_frames=10, esc=0, crop=True)
         field_obj = PerlinCrush()
         warped,_ = field_obj.warp_image(image2)
