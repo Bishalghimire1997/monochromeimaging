@@ -290,7 +290,7 @@ class raft_tetst():
         self.path = "image.h5"
         sim = RGBMisalignmentSimulator(path=self.path)
 
-        ref, target = sim.generate(from_index=20)                   # list of tensors
+        ref, target = sim.generate(from_index=20,jump=3)                   # list of tensors
         registered = reg.register_channels_gpu(ref)    # list of tensors
  
 

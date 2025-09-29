@@ -7,7 +7,7 @@ from processing_using_raft.utils import InputPadder, forward_interpolate
 from processing_using_raft.raft import RAFT
 class ChannelReg():
     def __init__(self):
-        self.__model_path ="C://Users//SIU856587710//Git//monochromeimaging//src//processing_using_raft//z.pth"
+        self.__model_path ="z.pth"
         self.__use_small = False
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = self.__load_model(self.__model_path, self.__use_small)
@@ -204,7 +204,7 @@ class ChannelReg():
             sampling_grid = grid + flow_norm  # displaced sampling grid
 
         # Sample the floating image at the new grid locations
-            warped_image = F.grid_sample(image, sampling_grid, mode='bilinear', padding_mode='zeros', align_corners=True)
+            warped_image = F.grid_sample(image, sampling_grid, mode='bilinear', padding_mode='border', align_corners=True)
             warped_np = (warped_image[0].permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
             if warped_np.ndim == 3 and warped_np.shape[2] == 1:
                warped_np = warped_np.squeeze(-1)
@@ -215,7 +215,7 @@ class ChannelReg():
             return warped_np
 
 
-    def warp_batch(self,images:torch.tensor, flows:torch.tensor,pad_mode = "zeros"):
+    def warp_batch(self,images:torch.tensor, flows:torch.tensor,pad_mode = "border"):
         print("This is flow type ################################# ",type(flows[0]))
        
 
