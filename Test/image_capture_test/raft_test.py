@@ -1,9 +1,12 @@
 import cv2
 import h5py
 import numpy as np
+from matplotlib import pyplot as plt 
+import torch
 from processing_using_raft.evaluation import Evaluation
 from skimage.metrics import structural_similarity as ssim
 from experiments.local_deformation_correction.sample import RGBMisalignmentSimulator
+from processing_using_raft.visualize import FlowVisualizer
 from processing_using_raft.raft_impl import ChannelReg
 class raft_tetst():
     def __init__(self):
@@ -285,52 +288,166 @@ class raft_tetst():
                 if key == 27:  # ESC to break early
                     break
     
-    def run_on_camera_capture_color(self):
+    def run_on_camera_capture_color(self,batch_size:int =12,from_index:int = 0):
         reg = ChannelReg()
         self.path = "image.h5"
-        sim = RGBMisalignmentSimulator(path=self.path)
+        jump = 1
+       
+        sim = RGBMisalignmentSimulator(path=self.path,batch_size = batch_size)
 
-        ref, target = sim.generate(from_index=20,jump=3)                   # list of tensors
-        registered = reg.register_channels_gpu(ref)    # list of tensors
+        ref, target = sim.generate(from_index,jump,batch_size)                   # list of tensors
+        flow_blue,flow_red,registered = reg.register_channels_gpu(ref)    # list of tensors
+        return ref,target,registered,flow_blue,flow_red
  
 
 
-        for i, j in zip(ref, registered):
-            # Convert tensors to numpy [H,W,3]
-            i_np = i.detach().cpu().permute(1, 2, 0).numpy()
-            j_np = j.detach().cpu().permute(1, 2, 0).numpy()
- 
-           
-            #j_np = j if isinstance(j, np.ndarray) else j.detach().cpu().numpy()
+    def graph(self,ssim_list,color_list):
+        # Create figure
+        plt.figure(figsize=(8, 5))
 
-            # Scale to uint8 [0,255]
-            if i_np.dtype != np.uint8:
-                i_np = np.clip(i_np, 0, 255).astype(np.uint8) 
-            if j_np.dtype != np.uint8: 
-                j_np = np.clip(j_np, 0, 255).astype(np.uint8)
-           
-           # print(j_np)
-           
-            # Ensure both images are same size
-            if i_np.shape[:2] != j_np.shape[:2]:
-                j_np = cv2.resize(j_np, (i_np.shape[1], i_np.shape[0]))
-  
-            # Side-by-side stacking
-           
-            split_screen = cv2.hconcat([i_np, j_np])
+        # Plot both
+        plt.plot(ssim_list, label="SSIM", marker='o')
+        plt.plot(color_list, label="ΔE (Color Difference)", marker='s')
 
-            # Display
-            cv2.imshow("Unregistered (Left)  |  Registered (Right)", split_screen)
-            key = cv2.waitKey(0)
-            if key == 27:  # ESC to break early
-                break
+        # Labels and legend
+        plt.xlabel("Frame Index")
+        plt.ylabel("Metric Value")
+        plt.title("SSIM and Color Difference Across Frames")
+        plt.legend()
+        plt.grid(True)
 
+        plt.show()
+    def pendullum_motion(self):
+        flow_visual = FlowVisualizer()
+        eval_im = Evaluation()
+        sample_frames = 50
+        batch_size = 12
+        from_index = 0
+        ref = []
+        targ = []
+        
+        reg = []
+        ssim_final = []
+        color_final = []
+        ref_final = []
+        reg_final = []
+        target_final = []
+        flow_final = []
+        roi = False
+        for i in range(sample_frames):
+            ref = []
+            targ=[]
+            reg = []
+            images = self.run_on_camera_capture_color(batch_size,from_index)
+             
+
+            ref.extend([i.detach().cpu().permute(1, 2, 0).numpy() for i in images[0]])
+            targ.extend([i.detach().cpu().permute(1, 2, 0).numpy() for i in images[1]])
+            reg.extend([i.detach().cpu().permute(1, 2, 0).numpy() for i in images[2]])
+
+
+            flow_blue = images[3]
+            flow_red = images[4]
+           
+            flow_blue = flow_blue.detach().cpu().numpy()
+            flow_equ_im_red = flow_visual.flows_to_numpy_images(flow_red)
+
+            # if not roi:
+            #     roi_val = cv2.selectROI("Select ROI", ref[3].astype(np.uint8))
+            #     roi = True
+            # x,y,w,h = roi_val
+
+
+            # ref_c = [img[y:y+h, x:x+w] for img in ref]
+            # targ_c = [img[y:y+h, x:x+w] for img in targ]
+            # reg_c = [img[y:y+h, x:x+w] for img in reg]  # fixed
+
+            # ref = ref_c
+            # targ = targ_c
+            # reg = reg_c
+
+            from_index = i*batch_size
+            ssim_final.extend(eval_im.get_structure_similarity(reg,targ))
+            color_final.extend(eval_im.compute_del_e_new(np.array(ref),np.array(targ)))
+            target_final.extend([i for i in targ])
+            flow_final.extend([i for i in flow_equ_im_red])
+
+            ref_final.extend([i for i in ref])
+            reg_final.extend([i for i in reg])
+            print("This is completed",i)
+        
+        #self.graph(ssim_final,color_final)
+        self.save_comparison_video(reg_final,ref_final,ssim_final,color_final)
     
+
+
+        # for i,j in zip(ref_final, reg):        
+
+            
+        #         # Convert tensors to numpy [H,W,3]
+        #         i_np = i            
+        #         j_np = j
+        #         # Scale to uint8 [0,255]
+        #         if i_np.dtype != np.uint8:
+        #             i_np = np.clip(i_np, 0, 255).astype(np.uint8) 
+        #         if j_np.dtype != np.uint8: 
+        #             j_np = np.clip(j_np, 0, 255).astype(np.uint8)
+            
+        #     # print(j_np)
+            
+        #         # Ensure both images are same size
+        #         if i_np.shape[:2] != j_np.shape[:2]:
+        #             j_np = cv2.resize(j_np, (i_np.shape[1], i_np.shape[0]))
+    
+        #         # Side-by-side stacking
+            
+        #         split_screen = cv2.hconcat([i_np, j_np])
+
+        #         # Display
+        #         cv2.imshow("Unregistered (Left)  |  Registered (Right)", split_screen)
+        #         key = cv2.waitKey(0)
+        #         if key == 27:  # ESC to break early
+        #             break
+
+        
+    def save_comparison_video(self,ref_images, reg_images, ssim_list, deltaE_list, out_path="comparison.mp4", fps=10):
+        assert len(ref_images) == len(reg_images) == len(ssim_list) == len(deltaE_list), "List lengths must match"
+
+        # Ensure all images are uint8
+        ref_images = [cv2.convertScaleAbs(img) for img in ref_images]
+        reg_images = [cv2.convertScaleAbs(img) for img in reg_images]
+
+        # Resize all images to the same size (use the reference image size)
+        h, w, _ = ref_images[0].shape
+        reg_images = [cv2.resize(img, (w, h)) for img in reg_images]
+
+        # Frame size for side-by-side (width doubled)
+        out_size = (w * 2, h)
+
+        # Video writer
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        writer = cv2.VideoWriter(out_path, fourcc, fps, out_size)
+
+        for idx, (ref, reg, ssim_val, dE) in enumerate(zip(ref_images, reg_images, ssim_list, deltaE_list)):
+            # Horizontally stack the images for split-screen
+            split_screen = np.hstack((ref, reg))
+
+            # Overlay text on the top-left corner
+            text = f"Frame {idx} | SSIM: {ssim_val:.4f} | delta_E: {dE:.2f}"
+            cv2.putText(split_screen, text, (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2, cv2.LINE_AA)
+
+            # Write the combined frame
+            writer.write(split_screen)
+
+        writer.release()
+        print(f"Video saved to {out_path}")
+        
 
 
 obj = raft_tetst()
 obj.roi = (229, 33, 526, 478) 
-obj.run_on_camera_capture_color()
+obj.pendullum_motion()
 
 
     

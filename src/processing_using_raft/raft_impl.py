@@ -46,7 +46,7 @@ class ChannelReg():
         #registered = registered.permute(0, 3, 1, 2)  # [B,H,W,3]
 
         
-        return registered
+        return flow_blue,flow_red,registered
 
     
     def __split_rgb_channels(self,image: torch.Tensor):

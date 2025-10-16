@@ -11,7 +11,7 @@ class RGBMisalignmentSimulator:
         self.resize_flag = True
         self.resize = (384,512)
 
-    def __sample(self, sample_from=0):
+    def __sample(self, sample_from=0,jump = 1):
         """
         Sample batch of frames from HDF5 and return tensor.
 
@@ -39,7 +39,7 @@ class RGBMisalignmentSimulator:
         frames = torch.tensor(images_np, dtype=torch.float32, device=self.device)
         return frames
 
-    def generate(self, from_index:int = 0,jump: int = 1):
+    def generate(self, from_index:int = 0,jump: int = 1,batch:int = 6):
         """
         Generate reference (misaligned) and target tensors.
 
@@ -50,7 +50,7 @@ class RGBMisalignmentSimulator:
             references: [M, H, W, 3] tensor (misaligned images).
             targets:    [M, H, W, 3] tensor (true images).
         """
-        self.frames = self.__sample(from_index)
+        self.frames = self.__sample(from_index,jump)
         N, H, W, C = self.frames.shape
         assert C == 3, "Frames must have 3 channels (RGB)."
 
