@@ -12,7 +12,7 @@ def software_trigger_test():
     """software trigger test""" 
     param= FlirCamParam()
     obj = FTC(param)
-    obj.capture()
+    obj.capture(feed=True)
 if __name__ == "__main__":
    software_trigger_test()
     

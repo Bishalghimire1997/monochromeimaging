@@ -11,7 +11,7 @@ from thors_lab_led_control_package.led_state_pulse import StateMachinePulse
 class FlirTriggerControl():
     def __init__(self,param:FlirCamParam):
         self._param= param
-        self.shutter = 10000
+        self.shutter = 5000
         self._system= PySpin.System.GetInstance()
         self._cam:Camera = self._system.GetCameras()[0]
         self._cam.Init()    
@@ -19,7 +19,8 @@ class FlirTriggerControl():
         self._cam =self._shutter.manual_shutter(self._cam,self.shutter)       
         self._cam.AcquisitionMode.SetValue(PySpin.AcquisitionMode_Continuous)
         self.set_color_image_format()
-        
+        self.disable_camera_gamma(self._cam)
+        print("shyuuter time  = ",self.shutter)
         pass 
     def set_color_image_format(self):
         nodemap = self._cam.GetNodeMap()
@@ -28,7 +29,6 @@ class FlirTriggerControl():
         if not PySpin.IsAvailable(pixel_format):
             print("PixelFormat node not available")
             return
-
         current_entry = PySpin.CEnumEntryPtr(pixel_format.GetCurrentEntry())
         current_name = current_entry.GetSymbolic() if current_entry else "Unknown"
         
@@ -59,6 +59,70 @@ class FlirTriggerControl():
             print("TriggerSource feature not writable or not supported.")
 
         pass 
+
+    import PySpin
+
+    def disable_camera_gamma(self,camera):
+        """
+        Disable gamma correction on a PySpin camera.
+        This method sets the Gamma node to linear (1.0) and disables GammaEnable if available.
+
+        Parameters:
+            camera : PySpin.Camera
+                The camera object (must be initialized).
+
+        Returns:
+            bool : True if gamma was successfully disabled or not available, False on error.
+        """
+        try:
+            nodemap = camera.GetNodeMap()
+
+            # First, try to disable GammaEnable if available
+            gamma_enable_node = PySpin.CBooleanPtr(nodemap.GetNode("GammaEnable"))
+            gamma_enable_node.SetValue(False)
+            print("GammaEnable node disabled.")
+       
+
+            return True
+
+        except PySpin.SpinnakerException as ex:
+            print(f"Error disabling gamma: {ex}")
+            return False
+
+    def set_camera_gamma(self,camera, value):
+        """
+        Set the Gamma value of a PySpin camera safely.
+
+        Parameters:
+            camera : PySpin.Camera
+                The camera object.
+            value : float
+                Desired gamma value.
+        """
+        try:
+            nodemap = camera.GetNodeMap()
+            gamma_node = PySpin.CFloatPtr(nodemap.GetNode("Gamma"))
+
+            if not PySpin.IsAvailable(gamma_node):
+                print("Gamma node not available on this camera.")
+                return False
+
+            if not PySpin.IsWritable(gamma_node):
+                print("Gamma node is not writable.")
+                return False
+
+            # Clamp the value within the allowed range
+            gamma_min = gamma_node.GetMin()
+            gamma_max = gamma_node.GetMax()
+            gamma_value = max(min(value, gamma_max), gamma_min)
+
+            gamma_node.SetValue(gamma_value)
+            print(f"Gamma set to {gamma_value}")
+            return True
+
+        except PySpin.SpinnakerException as ex:
+            print(f"Error setting gamma: {ex}")
+            return False
     def set_to_newest_only_buffer_mode(self):
          s_node_map = self._cam.GetTLStreamNodeMap()
          handling_mode = PySpin.CEnumerationPtr(s_node_map.GetNode('StreamBufferHandlingMode'))
@@ -77,7 +141,7 @@ class FlirTriggerControl():
     def capture(self,feed = True, record = True, led_flash = False):
         self.initialize_trigger_control_software()
         self.set_to_newest_only_buffer_mode()
-        #self.set_color_image_format()  
+        #self.set_color_image_format() 
         self._cam.BeginAcquisition()    
     
         data_queue_disp = queue.Queue() if feed else None
@@ -92,8 +156,9 @@ class FlirTriggerControl():
         if record:
             writer_process.daemon = True
             writer_process.start()       
-        time.sleep(2)       
-        for i in range(500):
+        #time.sleep(2)       
+        for i in range(1000):
+            print(i)
             if led_flash:                 
                  state.activate() 
             image_result = self._capture(i)                

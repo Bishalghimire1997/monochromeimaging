@@ -1,8 +1,10 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import skimage
 from skimage.color import  deltaE_ciede2000
 from skimage import color
+from skimage import filters
 from skimage.metrics import structural_similarity as ssim
 class Evaluation ():
     def __init__(self):
@@ -35,7 +37,7 @@ class Evaluation ():
                 ref_cha.append(r_ref)               
                 targ_cha.append(r_targ)
             return self.__str_sim(ref_cha,targ_cha)
-        elif channel == "l":
+        elif channel == "all":
             for ref,targ in zip(ref_images,target_images):
                 L_ref,a_ref,b_ref = cv2.split(cv2.cvtColor(ref,cv2.COLOR_BGR2Lab))
                 L_targ,a_targ,b_targ = cv2.split(cv2.cvtColor(targ,cv2.COLOR_BGR2Lab))
@@ -114,15 +116,54 @@ class Evaluation ():
         return hist
     def compute_del_e(self,ref_images,targ_images):
         del_e = []
+        def scale(lab_cv):
+            lab_cv = lab_cv.astype(np.float32)
+            l = lab_cv[..., 0] * 100.0 / 255.0 
+            a = lab_cv[..., 1] - 128.0
+            b = lab_cv[..., 2] - 128.0
+
+            l = l.astype(np.float32)
+            a = a.astype(np.float32)
+            b = b.astype(np.float32)
+            lab_standard = np.stack([l, a, b], axis=-1)
+            return lab_standard 
         for ref,targ in zip(ref_images,targ_images):
-            lab1 = color.rgb2lab(ref/255)
-            lab2 = color.rgb2lab(targ/255)
-            # Compute delta E
-            # delta_e_76 = deltaE_cie76(lab1, lab2)
-             #delta_e_94 = deltaE_cie94(lab1, lab2)
+
+            # b,g,r = cv2.split(ref)
+            # cv2.imshow("color",ref)
+            # cv2.imshow("b",b)
+            # cv2.imshow("g",g)
+            # cv2.imshow("r",r)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
+
+            print("eef = ",ref)
+            lab1=cv2.cvtColor(ref, cv2.COLOR_BGR2Lab)
+            lab2 = cv2.cvtColor(targ, cv2.COLOR_BGR2LAB)
+            print("lab 1 = ",lab1)
+            
+            lab1 = scale(lab1)
+            lab2=scale(lab2)
             delta_e_00 = deltaE_ciede2000(lab1, lab2)
-            del_e.append(np.mean(delta_e_00))
+            del_e= delta_e_00
         return del_e
+    def compute_del_e_new(self,ref_images,tar_images):
+        delta_e =[]
+
+
+        d_type = np.uint8
+
+        ref_images =  filters.gaussian(ref_images, (0,1,1,0), preserve_range=True).astype(d_type)
+        tar_images = filters.gaussian(tar_images,(0,1,1,0),preserve_range=True).astype(d_type)     
+        xyz_ref = skimage.color.rgb2xyz(ref_images)
+        xyz_target = skimage.color.rgb2xyz(tar_images)
+        lab_ref = skimage.color.xyz2lab(xyz_ref)
+        lab_targ = skimage.color.xyz2lab(xyz_target)
+        delta_e=deltaE_ciede2000(lab_ref,lab_targ)
+        avg = np.mean(delta_e,axis =(1,2) )
+
+        print(f"The value of delta e are {avg} ")
+        return avg
 
 
     
