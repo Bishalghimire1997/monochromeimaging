@@ -33,6 +33,7 @@ class RGBMisalignmentSimulator:
                 images.append(frame)
 
         if not images:  # no frames available
+            print("No frames availebal")
             return None
         images_np = np.stack(images, axis=0)
         
