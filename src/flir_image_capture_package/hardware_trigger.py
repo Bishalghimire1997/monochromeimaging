@@ -25,7 +25,7 @@ class FlirTriggerControl():
         self._cam.AcquisitionMode.SetValue(PySpin.AcquisitionMode_Continuous)
         self.ard= ArduinoControl()
         self.ard.stop()
-        self._flow_obj = FlowGPU()
+        #self._flow_obj = FlowGPU()
         self.thr = True
     def chunk_enable(self):
         """Enables all the writeable chunk features"""
@@ -115,7 +115,7 @@ class FlirTriggerControl():
         with h5py.File(path, "w") as h5_file:
             while self.thr:
                 try:
-                    item = data_queue.get(timeout=20) 
+                    item = data_queue.get(timeout=60) 
                 except queue.Empty:
                     print("Queue is empty, terminating.")
                     break
@@ -133,7 +133,7 @@ class FlirTriggerControl():
             images_batch = []
             image_flag = []
             for _ in range(3):
-                item = data_queue.get(block = True,timeout = 20)
+                item = data_queue.get(block = True,timeout = 60)
                 if item is None:
                     self.thr = False
                 flag, image = item

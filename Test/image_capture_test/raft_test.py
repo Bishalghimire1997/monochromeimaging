@@ -3,6 +3,7 @@ import h5py
 import numpy as np
 from matplotlib import pyplot as plt 
 import torch
+import pandas as pd
 from processing_using_raft.evaluation import Evaluation
 from skimage.metrics import structural_similarity as ssim
 from experiments.local_deformation_correction.sample import RGBMisalignmentSimulator
@@ -288,9 +289,9 @@ class raft_tetst():
                 if key == 27:  # ESC to break early
                     break
     
-    def run_on_camera_capture_color(self,batch_size:int =12,from_index:int = 0):
+    def run_on_camera_capture_color(self,batch_size:int =12,from_index:int = 0,path = "src/defocus_Exp/0.h5"):
         reg = ChannelReg()
-        self.path = "image.h5"
+        self.path = path
         jump = 1
        
         sim = RGBMisalignmentSimulator(path=self.path,batch_size = batch_size)
@@ -317,10 +318,10 @@ class raft_tetst():
         plt.grid(True)
 
         plt.show()
-    def pendullum_motion(self):
+    def pendullum_motion(self,path):
         flow_visual = FlowVisualizer()
         eval_im = Evaluation()
-        sample_frames = 50
+        sample_frames = 20
         batch_size = 12
         from_index = 0
         ref = []
@@ -338,7 +339,7 @@ class raft_tetst():
             ref = []
             targ=[]
             reg = []
-            images = self.run_on_camera_capture_color(batch_size,from_index)
+            images = self.run_on_camera_capture_color(batch_size,from_index,path)
              
 
             ref.extend([i.detach().cpu().permute(1, 2, 0).numpy() for i in images[0]])
@@ -374,10 +375,13 @@ class raft_tetst():
 
             ref_final.extend([i for i in ref])
             reg_final.extend([i for i in reg])
-            print("This is completed",i)
+        self.save_comparison_video(reg_final,ref_final,ssim_final,color_final)
+        print("This is completed",i)
+
+        return ssim_final,color_final
         
         #self.graph(ssim_final,color_final)
-        self.save_comparison_video(reg_final,ref_final,ssim_final,color_final)
+        
     
 
 
@@ -442,12 +446,77 @@ class raft_tetst():
 
         writer.release()
         print(f"Video saved to {out_path}")
+
+    def d_focus_experiment(self):
+        obj = raft_tetst()
+        path = "src/defocus_Exp/"
+        structural_sim = []
+        color_diff = []
+        for i in range(9):
+            path_eff = path + str(i)+".h5"
+            print("")
+            print("")
+            print(path_eff)
+            print("")
+            print("")
+            s_sim,deltaE = obj.pendullum_motion(path_eff)
+            structural_sim.append(s_sim)
+            color_diff.append(deltaE)
+        df_ssim = pd.DataFrame(structural_sim).T
+        df_deltaE = pd.DataFrame(color_diff).T
+
+        # Rename columns
+        df_ssim.columns = [f"ssim_{i}" for i in range(len(structural_sim))]
+        df_deltaE.columns = [f"deltaE_{i}" for i in range(len(color_diff))]
+
+        # Combine both into a single DataFrame (side by side)
+        df_final = pd.concat([df_ssim, df_deltaE], axis=1)
+
+        # Export to Excel
+        df_final.to_excel("defocus_experiment_results.xlsx", index=False)
+
+        return df_final
+    def time_period_Exp(self):
+        obj = raft_tetst()
+        path = "src/time_period_exp/"
+        structural_sim = []
+        color_diff = []
+        for i in range(3):
+            path_eff = path + str(i)+".h5"
+            print("")
+            print("")
+            print(path_eff)
+            print("")
+            print("")
+            s_sim,deltaE = obj.pendullum_motion(path_eff)
+            structural_sim.append(s_sim)
+            color_diff.append(deltaE)
+        df_ssim = pd.DataFrame(structural_sim).T
+        df_deltaE = pd.DataFrame(color_diff).T
+
+        # Rename columns
+        df_ssim.columns = [f"ssim_{i}" for i in range(len(structural_sim))]
+        df_deltaE.columns = [f"deltaE_{i}" for i in range(len(color_diff))]
+
+        # Combine both into a single DataFrame (side by side)
+        df_final = pd.concat([df_ssim, df_deltaE], axis=1)
+
+        # Export to Excel
+        df_final.to_excel("time_period_experiment_results.xlsx", index=False)
+
+        return df_final
+       
+        pass
+        
+        
+
+
+        pass
         
 
 
 obj = raft_tetst()
 obj.roi = (229, 33, 526, 478) 
-obj.pendullum_motion()
-
+obj.pendullum_motion(path="src/time_period_exp/0.h5")
 
     
