@@ -3,10 +3,11 @@ import h5py
 import numpy as np
 from matplotlib import pyplot as plt 
 import torch
+from torchvision import transforms as transform
 import pandas as pd
-from processing_using_raft.evaluation import Evaluation
+from processing_using_raft.evaluation_new import Evaluation
 from skimage.metrics import structural_similarity as ssim
-from experiments.local_deformation_correction.sample import RGBMisalignmentSimulator
+from experiments.Experiment_for_photonic_west.sample import RGBMisalignmentSimulator
 from processing_using_raft.visualize import FlowVisualizer
 from processing_using_raft.raft_impl import ChannelReg
 class raft_tetst():
@@ -105,7 +106,7 @@ class raft_tetst():
                 # cv2.waitKey(0)
                 # cv2.destroyAllWindows() 
             if channel == "b":
-                print("reading b    lue channel") 
+                print("reading blue channel") 
                 for i in range(len(b)):
                     temp = []         
                    
@@ -165,358 +166,489 @@ class raft_tetst():
 
     def run_on_endoscopy_dataset(self):       
         eval_im = Evaluation()
-        path = "image.h5" 
-        reg = ChannelReg()       
-        sseb = []
-        ssea=[]
-        sscb=[] 
-        ssca =[]   
-        sscrb=[]
-        sscra=[]
-        sscbb=[]
-        sscba=[]
-        sscgb=[]
-        sscga=[] 
-        ssclb=[]
-        sscla=[]  
+        #path = "image.h5" 
+        batch = 4
+        reg = ChannelReg() 
+        sim = RGBMisalignmentSimulator(batch_size=6)
+        #sim.video_to_h5("HyperK.avi","Hyper_k.h5")
+              
+        # sseb = []
+        # ssea=[]
+        # sscb=[] 
+        # ssca =[]   
+        # sscrb=[]
+        # sscra=[] 
+        # sscbb=[]
+        # sscba=[]
+        # sscgb=[] 
+        # sscga=[] 
+        # ssclb=[]
+        # sscla=[]  
+        ssim_before = []
+        ssim_after = []
+        delta_e_before = []
+        delta_e_after = []
        
-        offset = 0 
-        ref,target = self.read_sample("video090.h5",crop = True)
-        for j in range(5):
-            similarity_edge_before = np.mean(eval_im.edge_structural_similarity(  ref, target))
-            structural_similarity_color_before = np.mean(eval_im.get_structure_similarity(ref, target,channel = "g"))
-            structural_similarity_color_before_r = np.mean(eval_im.get_structure_similarity(ref, target,channel = "r"))
-            structural_similarity_color_before_g = np.mean(eval_im.get_structure_similarity(ref, target,channel = "g"))
-            structural_similarity_color_before_b = np.mean(eval_im.get_structure_similarity(ref, target,channel = "b"))
-            structural_similarity_color_before_l = np.mean(eval_im.get_structure_similarity(ref, target,channel = "l"))    
+        roi = (177, 37, 444, 475)        # Hyper Kvasir
+        #roi = (5, 440, 1071, 850) sterio mis
 
-
-            color_index_before = np.mean(eval_im.compute_del_e(ref, target)) 
-            image_batch = []
-            for i in range(10):    
         
-                #  cv2.imshow("image", ref[i])
-                #  cv2.wa Key(0)
-                #  cv2.destroyAllWindows()    
-                 image_batch.append(ref[i])
-            images = reg.register_channels(image_batch)
-            similarity_index_after = np.mean(eval_im.edge_structural_similarity(images, target))
-            color_index_after = np.mean(eval_im.compute_del_e(images, target))
-            for unreg, reg_img in zip(image_batch, images):
-            # Ensure images are the same size 
-                if unreg.shape != reg_img.shape:
-                    reg_img = cv2.resize(reg_img, (unreg.shape[1], unreg.shape[0]))
- 
-            # Horizontally stack for side-by-side comparison
-                split_screen = cv2.hconcat([unreg, reg_img])
+        
+#         offset = 0 
+#         from_ind = 200 # deforamtion 700
+        
 
-            # Show combined image
-                cv2.imshow("Unregistered (Left)  |  Registered (Right)", split_screen)
-                key = cv2.waitKey(0)
-                cv2.destroyAllWindows() 
-                if key == 27:  # ESC to break early
-                    break
-            structural_similarity_edge_after = np.mean(eval_im.edge_structural_similarity(images, target))
-            structural_similarity_color_after = np.mean(eval_im.get_structure_similarity(images, target,channel = "g"))
-            structural_similarity_color_after_r = np.mean(eval_im.get_structure_similarity(images, target,channel = "r"))
-            structural_similarity_color_after_g = np.mean(eval_im.get_structure_similarity(images, target,channel = "g"))
-            structural_similarity_color_after_b = np.mean(eval_im.get_structure_similarity(images, target,channel = "b"))
-            structural_similarity_color_after_l = np.mean(eval_im.get_structure_similarity(images, target,channel = "l"))
-            color_index_after = np.mean(eval_im.compute_del_e(images, target)) 
+#         ref,target = sim.generate("Hyper_k.h5",from_index=from_ind,jump=4,crop =roi,batch= batch)  
+#         img = ref[0].permute(1, 2, 0).cpu().numpy()
+#         img = (img).astype(np.uint8)
+
+# # OpenCV ROI selector
+#         roi = cv2.selectROI("Select ROI", img, showCrosshair=True, fromCenter=False)
+#         print("Selected ROI:", roi)
+#         cv2.destroyAllWindows()
+
+#         files = ["Scanning.h5","Surgery.h5","Breathing.h5","Deformation.h5"]
+
+        files = ["Hyper_k.h5"]
+        ssim_b0 = []
+        ssim_a0 = []
+        deltaE_b0 = []
+        deltaE_a0 = []
+        all_results = []  # to store all file results
+        for file in files:
+            print("Processing file:",file)
+            ssim_b = []
+            ssim_a = []
+            deltaE_b = []   
+            deltaE_a = []   
+            for ju in range (10):
+                print("Jump value is :",ju)
+                
+                from_ind = 200
+                for i in range (100):
+                    ref,target = sim.generate(file,from_index=from_ind,jump = ju+1,crop =roi,batch= batch)  
+                    from_ind = from_ind+ batch              # list of tensors
+                    print(file, from_ind)
+                    similarity_edge_before = np.mean(eval_im.edge_structural_similarity(  ref, target))
+                
+                    structural_similarity_color_before_r = np.mean(eval_im.get_structure_similarity(ref, target,channel = "r"))
+                    structural_similarity_color_before_g = np.mean(eval_im.get_structure_similarity(ref, target,channel = "g"))
+                    structural_similarity_color_before_b = np.mean(eval_im.get_structure_similarity(ref, target,channel = "b"))
+                    structural_similarity_color_before_l = np.mean(eval_im.get_structure_similarity(ref, target,channel = "all")) 
+                    color_index_before = np.mean(eval_im.compute_del_e(ref, target))   
+
+                    ssim_before.append(structural_similarity_color_before_l)
+                    delta_e_before.append(color_index_before)
+
+
+                    flow_b,flow_R,regestered = reg.register_channels_gpu(ref)
+                    im = regestered[0]  
+                    
+                    refer= ref[0]
+
+                    re_np = refer.detach().cpu().permute(1, 2, 0).numpy() 
+                    reg_np = im.detach().cpu().permute(1,2,0).numpy()
+
+                    # Convert to uint8 if needed
+                    if re_np.max() <= 1.0:
+                        re_np = (re_np * 255).astype('uint8')
+                        reg_np = (reg_np * 255).astype('uint8')
+                    else:
+                        re_np = re_np.astype('uint8')
+                        reg_np = reg_np.astype('uint8')
+                    re_np = re_np[..., ::-1]
+                    reg_np = reg_np[..., ::-1]
+
+                    cv2.imshow("before",re_np)
+                    cv2.imshow("after",reg_np)
+                    cv2.waitKey(0)
+                    cv2.destroyAllWindows()
+
+                    structural_similarity_edge_after = np.mean(eval_im.edge_structural_similarity(regestered, target))
+                    
+                    structural_similarity_color_after_r = np.mean(eval_im.get_structure_similarity(regestered, target,channel = "r"))
+                    structural_similarity_color_after_g = np.mean(eval_im.get_structure_similarity(regestered, target,channel = "g"))
+                    structural_similarity_color_after_b = np.mean(eval_im.get_structure_similarity(regestered, target,channel = "b"))
+                    structural_similarity_color_after_l = np.mean(eval_im.get_structure_similarity(regestered, target,channel = "all"))
+                    color_index_after = np.mean(eval_im.compute_del_e(regestered, target)) 
+
+                    ssim_after.append(structural_similarity_color_after_l)
+                    delta_e_after.append(color_index_after)
+
+                average_ssim_before = np.mean(ssim_before).item()
+                average_ssim_after = np.mean(ssim_after).item()
+                average_deltaE_before = np.mean(delta_e_before).item()
+                average_deltaE_after = np.mean(delta_e_after).item()
+
+                all_results.append({
+                    "File": file,
+                    "Jump": ju,
+                    "SSIM_Before": average_ssim_before,
+                    "SSIM_After": average_ssim_after,
+                    "DeltaE_Before": average_deltaE_before,
+                    "DeltaE_After": average_deltaE_after,
+                    
+                })
+        df_all = pd.DataFrame(all_results)
+
+    # Save to Excel
+        output_excel = "Endoscopy_Registration_Results.xlsx"
+        df_all.to_excel(output_excel, index=False)
+
+        print(f"\n✅ Results saved to {output_excel}")
+        print(df_all.head())
+
+        return df_all
+
+
+
+
+
+
+    # Combine all into one DataFrame
+       
+
+
+
             
-            print(f"Frame {i+1}: SSIM before registration = {similarity_edge_before:.4f}, SSIM after registration = {structural_similarity_edge_after:.4f}")
-            print(f"Frame {i+1}: Color before registration = {color_index_before:.4f}, Color after registration = {color_index_after:.4f}")
-            print(f"Frame {i+1}: SSIM blue before registration = {structural_similarity_color_before_b:.4f}, SSIM blue after registration = {structural_similarity_color_after_b:.4f}")
-            print(f"Frame {i+1}: SSIM green before registration = {structural_similarity_color_before_g:.4f}, SSIM green after registration = {structural_similarity_color_after_g:.4f}")
-            print(f"Frame {i+1}: SSIM red before registration = {structural_similarity_color_before_r:.4f}, SSIM red after registration = {structural_similarity_color_after_r:.4f}")
-            print(f"Frame {i+1}: SSIM all before registration = {structural_similarity_color_before:.4f}, SSIM all after registration = {structural_similarity_color_after:.4f}")
-            print(f"Frame {i+1}: SSIM l before registration = {structural_similarity_color_before_l:.4f}, SSIM l after registration = {structural_similarity_color_after_l:.4f}")
-            print("--------------------------------")
-            offset = offset + 10
-            sseb.append(similarity_edge_before)
-            ssea.append(structural_similarity_edge_after)
-            sscb.append(structural_similarity_color_before)
-            ssca.append(structural_similarity_color_after)
-            sscrb.append(structural_similarity_color_before_r)
-            sscra.append(structural_similarity_color_after_r)
-            sscbb.append(structural_similarity_color_before_b) 
-            sscba.append(structural_similarity_color_after_b)
-            sscgb.append(structural_similarity_color_before_g)
-            sscga.append(structural_similarity_color_after_g)
-            ssclb.append(structural_similarity_color_before_l)
-            sscla.append(structural_similarity_color_after_l)
-            ref,target = self.read_sample("video090.h5",esc=offset,crop = True)
-        print("ROI",self.roi)
-        print("average delta e before registration",np.mean(color_index_before))
-        print("average delta e after registration",np.mean(color_index_after))
-        print("average of 50 ssim of edges before registration",np.mean(sseb))
-        print("average of 50 ssim of edges after registration",np.mean(ssea))
-        print("average of 50 ssim of color before registration",np.mean(sscb))
-        print("average of 50 ssim of color after registration",np.mean(ssca))
-        print("average of 50 ssim of red before registration",np.mean(sscrb))
-        print("average of 50 ssim of red after registration",np.mean(sscra))
-        print("average of 50 ssim of blue before registration",np.mean(sscbb))
-        print("average of 50 ssim of blue after registration",np.mean(sscba))
-        print("average of 50 ssim of green before registration",np.mean(sscgb)) 
-        print("average of 50 ssim of green after registration",np.mean(sscga))
-        print("average of 50 ssim of l before registration",np.mean(ssclb))
-        print("average of 50 ssim of l after registration",np.mean(sscla))
-
-    def run_on_camera_capture(self):
-
-        reg = ChannelReg()
-        batch_size = 6
-        self.path = "image.h5"
-        self.itters = 1
-        image= []
-        registered = []
-        for i in range(self.itters):
-            image = self.read_from_camera1(self.path,batch_size =batch_size,start  =21)
-            registered = reg.register_channels(image)
-
-        for unreg, reg_img in zip(image, registered):
-            # Ensure images are the same size 
-                if unreg.shape != reg_img.shape:
-                    reg_img = cv2.resize(reg_img, (unreg.shape[1], unreg.shape[0]))
- 
-            # Horizontally stack for side-by-side comparison
-                split_screen = cv2.hconcat([unreg, reg_img])
-
-            # Show combined image
-                cv2.imshow("Unregistered (Left)  |  Registered (Right)", split_screen)
-                key = cv2.waitKey(0)
-                cv2.destroyAllWindows() 
-                if key == 27:  # ESC to break early
-                    break
-    
-    def run_on_camera_capture_color(self,batch_size:int =12,from_index:int = 0,path = "src/defocus_Exp/0.h5"):
-        reg = ChannelReg()
-        self.path = path
-        jump = 1
-       
-        sim = RGBMisalignmentSimulator(path=self.path,batch_size = batch_size)
-
-        ref, target = sim.generate(from_index,jump,batch_size)                   # list of tensors
-        flow_blue,flow_red,registered = reg.register_channels_gpu(ref)    # list of tensors
-        return ref,target,registered,flow_blue,flow_red
- 
 
 
-    def graph(self,ssim_list,color_list):
-        # Create figure
-        plt.figure(figsize=(8, 5))
+        # ssim_b0.append(ssim_b1)
+        # ssim_a0.append(ssim_a1)
+        # deltaE_b0.append(deltaE_b1)
+        # deltaE_a0.append(deltaE_a1)
 
-        # Plot both
-        plt.plot(ssim_list, label="SSIM", marker='o')
-        plt.plot(color_list, label="ΔE (Color Difference)", marker='s')
-
-        # Labels and legend
-        plt.xlabel("Frame Index")
-        plt.ylabel("Metric Value")
-        plt.title("SSIM and Color Difference Across Frames")
-        plt.legend()
-        plt.grid(True)
-
-        plt.show()
-    def pendullum_motion(self,path):
-        flow_visual = FlowVisualizer()
-        eval_im = Evaluation()
-        sample_frames = 20
-        batch_size = 12
-        from_index = 0
-        ref = []
-        targ = []
         
-        reg = []
-        ssim_final = []
-        color_final = []
-        ref_final = []
-        reg_final = []
-        target_final = []
-        flow_final = []
-        roi = False
-        for i in range(sample_frames):
+
+
+
+    # def run_on_endoscopy_dataset(self):       
+    #     eval_im = Evaluation()
+    #     reg = ChannelReg() 
+    #     sim = RGBMisalignmentSimulator(batch_size=6)
+
+    #     files = ["Surgery.h5", "Breathing.h5", "Deformation.h5", "Scanning.h5"]
+
+    #     roi = (5, 440, 1071, 850)
+    #     from_ind = 100
+    #     batch = 4
+
+    #     all_results = []  # to store all file results
+
+    #     for file in files:
+    #         print(f"\nProcessing file: {file}")
+
+    #         for ju in range(10):
+    #             print(f"  Jump value: {ju}")
+
+    #             ssim_before = []
+    #             ssim_after = []
+    #             delta_e_before = []
+    #             delta_e_after = []
+
+    #             for i in range(100):  # repeat for robustness
+    #                 ref, target = sim.generate(file, from_index=from_ind, jump=ju, crop=roi, batch=batch)
+    #                 from_ind += batch
+
+    #                 # --- Before registration ---
+    #                 ssim_l_before = np.mean(eval_im.get_structure_similarity(ref, target, channel="all"))
+    #                 deltaE_before = np.mean(eval_im.compute_del_e(ref, target))
+
+    #                 # --- Register channels ---
+    #                 _, _, registered = reg.register_channels_gpu(ref)
+
+    #                 # --- After registration ---
+    #                 ssim_l_after = np.mean(eval_im.get_structure_similarity(registered, target, channel="all"))
+    #                 deltaE_after = np.mean(eval_im.compute_del_e(registered, target))
+
+    #                 # Collect
+    #                 ssim_before.append(ssim_l_before)
+    #                 ssim_after.append(ssim_l_after)
+    #                 delta_e_before.append(deltaE_before)
+    #                 delta_e_after.append(deltaE_after)
+
+    #             # Compute averages for this jump value
+    #             avg_ssim_b = np.mean(ssim_before)
+    #             avg_ssim_a = np.mean(ssim_after)
+    #             avg_dE_b = np.mean(delta_e_before)
+    #             avg_dE_a = np.mean(delta_e_after)
+
+    #             # Add record
+    #             all_results.append({
+    #                 "File": file,
+    #                 "Jump": ju,
+    #                 "SSIM_Before": avg_ssim_b,
+    #                 "SSIM_After": avg_ssim_a,
+    #                 "DeltaE_Before": avg_dE_b,
+    #                 "DeltaE_After": avg_dE_a,
+    #                 "SSIM_Improvement": avg_ssim_a - avg_ssim_b,
+    #                 "DeltaE_Improvement": avg_dE_b - avg_dE_a
+    #             })
+
+    #     # Combine all results into one DataFrame
+    #     df_all = pd.DataFrame(all_results)
+
+    #     # Save to Excel
+    #     output_excel = "Endoscopy_Registration_Results.xlsx"
+    #     df_all.to_excel(output_excel, index=False)
+
+    #     print(f"\n✅ Results saved to {output_excel}")
+    #     print(df_all.head())
+
+    #     return df_all
+
+
+
+        def run_on_camera_capture(self):
+
+            reg = ChannelReg()
+            batch_size = 6
+            self.path = "image.h5"
+            self.itters = 1
+            image= []
+            registered = []
+            for i in range(self.itters):
+                image = self.read_from_camera1(self.path,batch_size =batch_size,start  =21)
+                registered = reg.register_channels(image)
+
+            for unreg, reg_img in zip(image, registered):
+                # Ensure images are the same size 
+                    if unreg.shape != reg_img.shape:
+                        reg_img = cv2.resize(reg_img, (unreg.shape[1], unreg.shape[0]))
+    
+                # Horizontally stack for side-by-side comparison
+                    split_screen = cv2.hconcat([unreg, reg_img])
+
+                # Show combined image
+                    cv2.imshow("Unregistered (Left)  |  Registered (Right)", split_screen)
+                    key = cv2.waitKey(0)
+                    cv2.destroyAllWindows() 
+                    if key == 27:  # ESC to break early
+                        break
+        
+        def run_on_camera_capture_color(self,batch_size:int =12,from_index:int = 0,path = "src/defocus_Exp/0.h5"):
+            reg = ChannelReg()
+            self.path = path
+            jump = 1
+        
+            sim = RGBMisalignmentSimulator(batch_size = batch_size)
+            
+
+            ref, target = sim.generate(path,from_index,jump,batch_size)                   # list of tensors
+            flow_blue,flow_red,registered = reg.register_channels_gpu(ref)    # list of tensors
+            return ref,target,registered,flow_blue,flow_red
+    
+
+
+        def graph(self,ssim_list,color_list):
+            # Create figure
+            plt.figure(figsize=(8, 5))
+
+            # Plot both
+            plt.plot(ssim_list, label="SSIM", marker='o')
+            plt.plot(color_list, label="ΔE (Color Difference)", marker='s')
+
+            # Labels and legend
+            plt.xlabel("Frame Index")
+            plt.ylabel("Metric Value")
+            plt.title("SSIM and Color Difference Across Frames")
+            plt.legend()
+            plt.grid(True)
+
+            plt.show()
+        def pendullum_motion(self,path):
+            flow_visual = FlowVisualizer()
+            eval_im = Evaluation()
+            sample_frames = 20
+            batch_size = 12
+            from_index = 0
             ref = []
-            targ=[]
+            targ = []
+            
             reg = []
-            images = self.run_on_camera_capture_color(batch_size,from_index,path)
-             
+            ssim_final = []
+            color_final = []
+            ref_final = []
+            reg_final = []
+            target_final = []
+            flow_final = []
+            roi = False
+            for i in range(sample_frames):
+                ref = []
+                targ=[]
+                reg = []
+                images = self.run_on_camera_capture_color(batch_size,from_index,path)
+                
 
-            ref.extend([i.detach().cpu().permute(1, 2, 0).numpy() for i in images[0]])
-            targ.extend([i.detach().cpu().permute(1, 2, 0).numpy() for i in images[1]])
-            reg.extend([i.detach().cpu().permute(1, 2, 0).numpy() for i in images[2]])
+                ref.extend([i.detach().cpu().permute(1, 2, 0).numpy() for i in images[0]])
+                targ.extend([i.detach().cpu().permute(1, 2, 0).numpy() for i in images[1]])
+                reg.extend([i.detach().cpu().permute(1, 2, 0).numpy() for i in images[2]])
 
 
-            flow_blue = images[3]
-            flow_red = images[4]
-           
-            flow_blue = flow_blue.detach().cpu().numpy()
-            flow_equ_im_red = flow_visual.flows_to_numpy_images(flow_red)
+                flow_blue = images[3]
+                flow_red = images[4]
+            
+                flow_blue = flow_blue.detach().cpu().numpy()
+                flow_equ_im_red = flow_visual.flows_to_numpy_images(flow_red)
 
-            # if not roi:
-            #     roi_val = cv2.selectROI("Select ROI", ref[3].astype(np.uint8))
-            #     roi = True
-            # x,y,w,h = roi_val
+                # if not roi:
+                #     roi_val = cv2.selectROI("Select ROI", ref[3].astype(np.uint8))
+                #     roi = True
+                # x,y,w,h = roi_val
 
 
-            # ref_c = [img[y:y+h, x:x+w] for img in ref]
-            # targ_c = [img[y:y+h, x:x+w] for img in targ]
-            # reg_c = [img[y:y+h, x:x+w] for img in reg]  # fixed
+                # ref_c = [img[y:y+h, x:x+w] for img in ref]
+                # targ_c = [img[y:y+h, x:x+w] for img in targ]
+                # reg_c = [img[y:y+h, x:x+w] for img in reg]  # fixed
 
-            # ref = ref_c
-            # targ = targ_c
-            # reg = reg_c
-
-            from_index = i*batch_size
-            ssim_final.extend(eval_im.get_structure_similarity(reg,targ))
-            color_final.extend(eval_im.compute_del_e_new(np.array(ref),np.array(targ)))
-            target_final.extend([i for i in targ])
-            flow_final.extend([i for i in flow_equ_im_red])
-
-            ref_final.extend([i for i in ref])
-            reg_final.extend([i for i in reg])
-        self.save_comparison_video(reg_final,ref_final,ssim_final,color_final)
-        print("This is completed",i)
-
-        return ssim_final,color_final
-        
-        #self.graph(ssim_final,color_final)
-        
+                # ref = ref_c
+                # targ = targ_c
+                # reg = reg_c
     
+                from_index = i*batch_size
+                ssim_final.extend(eval_im.get_structure_similarity(reg,targ))
+                color_final.extend(eval_im.compute_del_e_new(np.array(ref),np.array(targ)))
+                target_final.extend([i for i in targ])
+                flow_final.extend([i for i in flow_equ_im_red])
 
+                ref_final.extend([i for i in ref])
+                reg_final.extend([i for i in reg])
+            self.save_comparison_video(reg_final,ref_final,ssim_final,color_final)
+            print("This is completed",i)
 
-        # for i,j in zip(ref_final, reg):        
-
+            return ssim_final,color_final
             
-        #         # Convert tensors to numpy [H,W,3]
-        #         i_np = i            
-        #         j_np = j
-        #         # Scale to uint8 [0,255]
-        #         if i_np.dtype != np.uint8:
-        #             i_np = np.clip(i_np, 0, 255).astype(np.uint8) 
-        #         if j_np.dtype != np.uint8: 
-        #             j_np = np.clip(j_np, 0, 255).astype(np.uint8)
+            #self.graph(ssim_final,color_final)
             
-        #     # print(j_np)
-            
-        #         # Ensure both images are same size
-        #         if i_np.shape[:2] != j_np.shape[:2]:
-        #             j_np = cv2.resize(j_np, (i_np.shape[1], i_np.shape[0]))
-    
-        #         # Side-by-side stacking
-            
-        #         split_screen = cv2.hconcat([i_np, j_np])
-
-        #         # Display
-        #         cv2.imshow("Unregistered (Left)  |  Registered (Right)", split_screen)
-        #         key = cv2.waitKey(0)
-        #         if key == 27:  # ESC to break early
-        #             break
-
-        
-    def save_comparison_video(self,ref_images, reg_images, ssim_list, deltaE_list, out_path="comparison.mp4", fps=10):
-        assert len(ref_images) == len(reg_images) == len(ssim_list) == len(deltaE_list), "List lengths must match"
-
-        # Ensure all images are uint8
-        ref_images = [cv2.convertScaleAbs(img) for img in ref_images]
-        reg_images = [cv2.convertScaleAbs(img) for img in reg_images]
-
-        # Resize all images to the same size (use the reference image size)
-        h, w, _ = ref_images[0].shape
-        reg_images = [cv2.resize(img, (w, h)) for img in reg_images]
-
-        # Frame size for side-by-side (width doubled)
-        out_size = (w * 2, h)
-
-        # Video writer
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        writer = cv2.VideoWriter(out_path, fourcc, fps, out_size)
-
-        for idx, (ref, reg, ssim_val, dE) in enumerate(zip(ref_images, reg_images, ssim_list, deltaE_list)):
-            # Horizontally stack the images for split-screen
-            split_screen = np.hstack((ref, reg))
-
-            # Overlay text on the top-left corner
-            text = f"Frame {idx} | SSIM: {ssim_val:.4f} | delta_E: {dE:.2f}"
-            cv2.putText(split_screen, text, (10, 30),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2, cv2.LINE_AA)
-
-            # Write the combined frame
-            writer.write(split_screen)
-
-        writer.release()
-        print(f"Video saved to {out_path}")
-
-    def d_focus_experiment(self):
-        obj = raft_tetst()
-        path = "src/defocus_Exp/"
-        structural_sim = []
-        color_diff = []
-        for i in range(9):
-            path_eff = path + str(i)+".h5"
-            print("")
-            print("")
-            print(path_eff)
-            print("")
-            print("")
-            s_sim,deltaE = obj.pendullum_motion(path_eff)
-            structural_sim.append(s_sim)
-            color_diff.append(deltaE)
-        df_ssim = pd.DataFrame(structural_sim).T
-        df_deltaE = pd.DataFrame(color_diff).T
-
-        # Rename columns
-        df_ssim.columns = [f"ssim_{i}" for i in range(len(structural_sim))]
-        df_deltaE.columns = [f"deltaE_{i}" for i in range(len(color_diff))]
-
-        # Combine both into a single DataFrame (side by side)
-        df_final = pd.concat([df_ssim, df_deltaE], axis=1)
-
-        # Export to Excel
-        df_final.to_excel("defocus_experiment_results.xlsx", index=False)
-
-        return df_final
-    def time_period_Exp(self):
-        obj = raft_tetst()
-        path = "src/time_period_exp/"
-        structural_sim = []
-        color_diff = []
-        for i in range(3):
-            path_eff = path + str(i)+".h5"
-            print("")
-            print("")
-            print(path_eff)
-            print("")
-            print("")
-            s_sim,deltaE = obj.pendullum_motion(path_eff)
-            structural_sim.append(s_sim)
-            color_diff.append(deltaE)
-        df_ssim = pd.DataFrame(structural_sim).T
-        df_deltaE = pd.DataFrame(color_diff).T
-
-        # Rename columns
-        df_ssim.columns = [f"ssim_{i}" for i in range(len(structural_sim))]
-        df_deltaE.columns = [f"deltaE_{i}" for i in range(len(color_diff))]
-
-        # Combine both into a single DataFrame (side by side)
-        df_final = pd.concat([df_ssim, df_deltaE], axis=1)
-
-        # Export to Excel
-        df_final.to_excel("time_period_experiment_results.xlsx", index=False)
-
-        return df_final
-       
-        pass
-        
         
 
 
-        pass
+            # for i,j in zip(ref_final, reg):        
+
+                
+            #         # Convert tensors to numpy [H,W,3]
+            #         i_np = i            
+            #         j_np = j
+            #         # Scale to uint8 [0,255]
+            #         if i_np.dtype != np.uint8:
+            #             i_np = np.clip(i_np, 0, 255).astype(np.uint8) 
+            #         if j_np.dtype != np.uint8: 
+            #             j_np = np.clip(j_np, 0, 255).astype(np.uint8)
+                
+            #     # print(j_np)
+                
+            #         # Ensure both images are same size
+            #         if i_np.shape[:2] != j_np.shape[:2]:
+            #             j_np = cv2.resize(j_np, (i_np.shape[1], i_np.shape[0]))
+        
+            #         # Side-by-side stacking
+                
+            #         split_screen = cv2.hconcat([i_np, j_np])
+
+            #         # Display
+            #         cv2.imshow("Unregistered (Left)  |  Registered (Right)", split_screen)
+            #         key = cv2.waitKey(0)
+            #         if key == 27:  # ESC to break early
+            #             break
+
+            
+        def save_comparison_video(self,ref_images, reg_images, ssim_list, deltaE_list, out_path="comparison.mp4", fps=10):
+            assert len(ref_images) == len(reg_images) == len(ssim_list) == len(deltaE_list), "List lengths must match"
+
+            # Ensure all images are uint8
+            ref_images = [cv2.convertScaleAbs(img) for img in ref_images]
+            reg_images = [cv2.convertScaleAbs(img) for img in reg_images]
+
+            # Resize all images to the same size (use the reference image size)
+            h, w, _ = ref_images[0].shape
+            reg_images = [cv2.resize(img, (w, h)) for img in reg_images]
+
+            # Frame size for side-by-side (width doubled)
+            out_size = (w * 2, h)
+
+            # Video writer
+            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+            writer = cv2.VideoWriter(out_path, fourcc, fps, out_size)
+
+            for idx, (ref, reg, ssim_val, dE) in enumerate(zip(ref_images, reg_images, ssim_list, deltaE_list)):
+                # Horizontally stack the images for split-screen
+                split_screen = np.hstack((ref, reg))
+
+                # Overlay text on the top-left corner
+                text = f"Frame {idx} | SSIM: {ssim_val:.4f} | delta_E: {dE:.2f}"
+                cv2.putText(split_screen, text, (10, 30),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2, cv2.LINE_AA)
+
+                # Write the combined frame
+                writer.write(split_screen)
+
+            writer.release()
+            print(f"Video saved to {out_path}")
+
+        def d_focus_experiment(self):
+            obj = raft_tetst()
+            path = "src/defocus_Exp/"
+            structural_sim = []
+            color_diff = []
+            for i in range(9):
+                path_eff = path + str(i)+".h5"
+                print("")
+                print("")
+                print(path_eff)
+                print("")
+                print("")
+                s_sim,deltaE = obj.pendullum_motion(path_eff)
+                structural_sim.append(s_sim)
+                color_diff.append(deltaE)
+            df_ssim = pd.DataFrame(structural_sim).T
+            df_deltaE = pd.DataFrame(color_diff).T
+
+            # Rename columns
+            df_ssim.columns = [f"ssim_{i}" for i in range(len(structural_sim))]
+            df_deltaE.columns = [f"deltaE_{i}" for i in range(len(color_diff))]
+
+            # Combine both into a single DataFrame (side by side)
+            df_final = pd.concat([df_ssim, df_deltaE], axis=1)
+
+            # Export to Excel
+            df_final.to_excel("defocus_experiment_results.xlsx", index=False)
+
+            return df_final
+        def time_period_Exp(self):
+            obj = raft_tetst()
+            path = "src/time_period_exp/"
+            structural_sim = []
+            color_diff = []
+            for i in range(3):
+                path_eff = path + str(i)+".h5"
+                print("")
+                print("")
+                print(path_eff)
+                print("")
+                print("")
+                s_sim,deltaE = obj.pendullum_motion(path_eff)
+                structural_sim.append(s_sim)
+                color_diff.append(deltaE)
+            df_ssim = pd.DataFrame(structural_sim).T
+            df_deltaE = pd.DataFrame(color_diff).T
+
+            # Rename columns
+            df_ssim.columns = [f"ssim_{i}" for i in range(len(structural_sim))]
+            df_deltaE.columns = [f"deltaE_{i}" for i in range(len(color_diff))]
+
+            # Combine both into a single DataFrame (side by side)
+            df_final = pd.concat([df_ssim, df_deltaE], axis=1)
+
+            # Export to Excel
+            df_final.to_excel("time_period_experiment_results.xlsx", index=False)
+
+            return df_final
+        
+
         
 
 
 obj = raft_tetst()
 obj.roi = (229, 33, 526, 478) 
-obj.pendullum_motion(path="src/time_period_exp/0.h5")
-
-    
+obj.run_on_endoscopy_dataset()
+ 

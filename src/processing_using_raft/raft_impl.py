@@ -14,14 +14,9 @@ class ChannelReg():
     def register_channels_gpu(self,image:torch.tensor):
        
         val = self.__split_rgb_channels(image.clone())
-
-       
-
-
         blue = val["blue"]
         green = val["green"]
         red = val["red"]
-       
         flow_blue = self.compute_flow(green,blue)
         flow_red = self.compute_flow(green,red)
         warped_blue = self.warp_batch(blue,flow_blue)
@@ -30,7 +25,6 @@ class ChannelReg():
         warped_blue = warped_blue[:,1,:,:]
         warped_red = warped_red[:,1,:,:]
         green = green[:,1,:,:]
-
         warped_red = warped_red.unsqueeze(1)   # [B,1,H,W]
         green     = green.unsqueeze(1)         # [B,1,H,W]
         warped_blue= warped_blue.unsqueeze(1)  # [B,1,H,W]
@@ -121,8 +115,13 @@ class ChannelReg():
     cv2.destroyAllWindows()
     def register_channels(self,image_batch):
         fix_g,float_b,float_r,green,blue,red = self.__get_ref_floating_batch(image_batch)
-        flow_b = self.compute_flow(fix_g,float_b)
-        flow_r = self.compute_flow(fix_g,float_r)
+        ten_g =torch.stack([t.squeeze(0) for t in fix_g],dim=0)
+        ten_b =torch.stack([t.squeeze(0) for t in float_b],dim=0)
+        ten_r = torch.stack([t.squeeze(0) for t in float_r],dim=0)
+        
+        flow_b = self.register_channels_gpu(ten_g,ten_b)
+        flow_r = self.compute_flow(ten_g,ten_r)
+        reg_b = self.register_channels_gpu()
         registered_b = self.reg(blue,flow_b)
         registered_r = self.reg(red,flow_r)
         registered_image = [cv2.merge([b,g,r]) for b,g,r in zip(registered_b,green,registered_r)]
@@ -207,7 +206,7 @@ class ChannelReg():
             warped_image = F.grid_sample(image, sampling_grid, mode='bilinear', padding_mode='border', align_corners=True)
             warped_np = (warped_image[0].permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
             if warped_np.ndim == 3 and warped_np.shape[2] == 1:
-               warped_np = warped_np.squeeze(-1)
+               warped_np = warped_np.squeeze(-1) 
             # print(warped_np)
             # cv2.imshow("warped",warped_np)
             # cv2.waitKey(0)
@@ -216,7 +215,6 @@ class ChannelReg():
 
 
     def warp_batch(self,images:torch.tensor, flows:torch.tensor,pad_mode = "border"):
-        print("This is flow type ################################# ",type(flows[0]))
        
 
         B, C, H, W = images.size()
@@ -239,7 +237,6 @@ class ChannelReg():
          # Warp
 
         warped = F.grid_sample(images, warp_grid, mode='bilinear', padding_mode=pad_mode, align_corners=True)
-        print("################################################################ This is the shape immidaitely after warping #################################  =  ",warped.shape)
        
         return warped
     
@@ -266,15 +263,14 @@ class ChannelReg():
         # img2_list = [self.__to_tensor(img,batched = False) for img in floating_batch]
 
         img1_batch = fix_batch # [B, 3, H, W]
-        img2_batch = floating_batch  # [B, 3, H, W]
-        print("Refrence shape in compute flow  :",img1_batch.shape,"Target Shape in compute flow ", img2_batch.shape)
 
+        img2_batch = floating_batch  # [B, 3, H, W]
         padder = InputPadder(img1_batch.shape)
         img1_batch, img2_batch = padder.pad(img1_batch, img2_batch)
        
 
         # Inference
-        _, flow_preds = self.model(img1_batch, img2_batch, iters=100  , test_mode=True)
+        _, flow_preds = self.model(img1_batch, img2_batch, iters=32  , test_mode=True)
 
         # Unpad and convert to list of numpy arrays
         # flows = [] 
