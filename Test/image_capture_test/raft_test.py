@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt 
 import torch
 import pandas as pd
+import torch.nn.functional as F
 from processing_using_raft.evaluation import Evaluation
 from skimage.metrics import structural_similarity as ssim
 from experiments.local_deformation_correction.sample import RGBMisalignmentSimulator
@@ -61,7 +62,6 @@ class raft_tetst():
             for i in range(batch_size) :
                 for j in range(3): 
                    im1.append(f[str(k+j)][:])  
-                   print(k+j)
                 imtemp=[]
                 b=im1[0]
                 g = im1[2]
@@ -196,7 +196,7 @@ class raft_tetst():
             for i in range(10):    
         
                 #  cv2.imshow("image", ref[i])
-                #  cv2.wa Key(0)
+                #  cv2.wa Key(0) 
                 #  cv2.destroyAllWindows()    
                  image_batch.append(ref[i])
             images = reg.register_channels(image_batch)
@@ -341,10 +341,13 @@ class raft_tetst():
             reg = []
             images = self.run_on_camera_capture_color(batch_size,from_index,path)
              
+            self.error_over_target(images[2])
 
             ref.extend([i.detach().cpu().permute(1, 2, 0).numpy() for i in images[0]])
             targ.extend([i.detach().cpu().permute(1, 2, 0).numpy() for i in images[1]])
             reg.extend([i.detach().cpu().permute(1, 2, 0).numpy() for i in images[2]])
+
+            
 
 
             flow_blue = images[3]
@@ -481,7 +484,7 @@ class raft_tetst():
         path = "src/time_period_exp/"
         structural_sim = []
         color_diff = []
-        for i in range(3):
+        for i in range(1):
             path_eff = path + str(i)+".h5"
             print("")
             print("")
@@ -505,18 +508,105 @@ class raft_tetst():
         df_final.to_excel("time_period_experiment_results.xlsx", index=False)
 
         return df_final
+    def __sample(self,path, sample_from=300,batch_size=10,jump = 1,resize = True):
+        """
+        Sample batch of frames from HDF5 and return tensor.
+
+        Args:
+            sample_from (int): Starting index inside the HDF5 file.
+
+        Returns:
+            frames: Tensor [M, H, W, C] on self.device,
+                    where M <= batch_size depending on available frames.
+        """
+        images = []
+        
+        with h5py.File(path, "r") as f:
+            total_frames = len(f.keys())  # total number of images stored
+            for i in range(batch_size):
+                idx = i + sample_from
+                if idx >= total_frames:   # stop if we exceed dataset length
+                    break
+                frame = f[str(idx)][:]    # numpy array (H, W, C)
+                images.append(frame)
+
+        if not images:  # no frames available
+            print("No frames availebal")
+            return None
+        images_np = np.stack(images, axis=0)
+        
+        frames = torch.tensor(images_np, dtype=torch.float32, device="cuda")
+        
+
+        return frames
+    def error_over_target(self,corrected:torch.tensor):
+        """Get the refrece image of batch size m this will be standstill image of pendulum
+           corrected images are the images after channel missallignment correction
+
+        """
+        
+        b,c,h,w=corrected.shape
+        resize = True
+        target_path = "image.h5"
+        target = self.__sample(target_path,sample_from=400,batch_size=b,jump = 1)
+        self.resize = ()
+
        
-        pass
-        
-        
+        print("this is target shape = = =  =",target.shape)
+        if resize == True:
+            temp =[]
+            for i in target:
+               H_new, W_new = (384,512)
+            # permute to [C,H,W] for interpolate
+               
+               i = i.permute(2, 0, 1).unsqueeze(0).float()
+               i = F.interpolate(i, size=(H_new, W_new), mode='bilinear', align_corners=True)[0].permute(1, 2, 0)
+               temp.append(i)
+            target = torch.stack(temp, dim=0).permute(0, 3, 1, 2)
+        print("this is target shape = = =  =",target.shape)
+        reg = ChannelReg()
+        flow = reg.compute_flow(target,corrected)
+        warped = reg.warp_batch(corrected,flow)   
+        self.__disp(target,warped,corrected)
 
 
-        pass
-        
+    def __disp(self, target, warped, real):
+        for i, j, k in zip(target, warped, real):
+            # Move tensors to CPU and convert to numpy
+            i = i.detach().cpu().numpy()
+            j = j.detach().cpu().numpy()
+            k = k.detach().cpu().numpy()
+
+            # If tensors are (C, H, W), convert to (H, W, C)
+            if i.ndim == 3 and i.shape[0] in [1, 3]:
+                i = np.transpose(i, (1, 2, 0))
+                j = np.transpose(j, (1, 2, 0))
+                k = np.transpose(k, (1, 2, 0))
+
+            # Convert to uint8 (assumes already scaled 0–255)
+            if i.dtype != np.uint8:
+                i = np.clip(i, 0, 255).astype(np.uint8)
+            if j.dtype != np.uint8:
+                j = np.clip(j, 0, 255).astype(np.uint8)
+            if k.dtype != np.uint8:
+                k = np.clip(k, 0, 255).astype(np.uint8)
+
+            # Combine side-by-side: Target | Warped | Real
+            combined = np.hstack((i, j, k))
+            cv2.imshow("Target | Warped | Real", combined)
+
+            key = cv2.waitKey(0)
+            if key == 27:  # ESC to exit
+                break
+
+        cv2.destroyAllWindows()
+
+
+
 
 
 obj = raft_tetst()
 obj.roi = (229, 33, 526, 478) 
-obj.pendullum_motion(path="src/time_period_exp/0.h5")
+obj.pendullum_motion(path="src/time_period_exp/1.h5")
 
-    
+                 

@@ -41,8 +41,19 @@ for one oscillation 10.63/10 = 1.063
 ------------------------------------------------------------------------------
 bob height from ground = 2 inch
 pendullum length = 6 2/8 inch = 0.15875 m
-computed time_period = 2 * pi * sqrt( 0.15875 / 9.8)
+computed time_period = 2 * pi * sqrt( 0.15875 / 9.8) = 0.7996 
 experimental time period =
+1. 8.68
+2. 8.21
+3. 8.28
+4. 8.48
+5. 8.20
+6. 8.25
+7. 8.30
+8. 8.38
+9. 8.21
+mean = 8.332 = > for 10 oscillation
+for one ocillation = 0.8332 s
 ------------------------------------------------------------------------------
 bob height from ground = 
 pendullum length =
