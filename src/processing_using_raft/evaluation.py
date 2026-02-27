@@ -137,11 +137,9 @@ class Evaluation ():
             # cv2.waitKey(0)
             # cv2.destroyAllWindows()
 
-            print("eef = ",ref)
+         
             lab1=cv2.cvtColor(ref, cv2.COLOR_BGR2Lab)
             lab2 = cv2.cvtColor(targ, cv2.COLOR_BGR2LAB)
-            print("lab 1 = ",lab1)
-            
             lab1 = scale(lab1)
             lab2=scale(lab2)
             delta_e_00 = deltaE_ciede2000(lab1, lab2)

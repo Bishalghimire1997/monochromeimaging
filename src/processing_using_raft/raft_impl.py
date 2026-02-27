@@ -239,7 +239,6 @@ class ChannelReg():
          # Warp
 
         warped = F.grid_sample(images, warp_grid, mode='bilinear', padding_mode=pad_mode, align_corners=True)
-        print("################################################################ This is the shape immidaitely after warping #################################  =  ",warped.shape)
        
         return warped
     
