@@ -123,7 +123,7 @@ class ChannelReg():
         fix_g,float_b,float_r,green,blue,red = self.__get_ref_floating_batch(image_batch)
         flow_b = self.compute_flow(fix_g,float_b)
         flow_r = self.compute_flow(fix_g,float_r)
-        registered_b = self.reg(blue,flow_b)
+        registered_b = self.warp_batch(blue,flow_b)
         registered_r = self.reg(red,flow_r)
         registered_image = [cv2.merge([b,g,r]) for b,g,r in zip(registered_b,green,registered_r)]
         return registered_image
@@ -186,7 +186,7 @@ class ChannelReg():
     def fine_reg_using_stn(self,floating_image, flow):
             if floating_image.ndim == 2:
                 floating_image = np.expand_dims(floating_image, axis=-1)
-            image = torch.from_numpy(floating_image).permute(2, 0, 1).unsqueeze(0).float() / 255.0  # (B=1, C, H, W)
+            image = torch.from_numpy(floating_image).permute(2, 0, 1).unsqueeze(0).float()  # (B=1, C, H, W)
             flow = torch.from_numpy(flow).permute(2, 0, 1).unsqueeze(0).float()  # (B=1, 2, H, W)
             B,C,H,W = image.size()
             grid_y, grid_x = torch.meshgrid(torch.linspace(-1, 1, H, device=image.device),
@@ -266,8 +266,7 @@ class ChannelReg():
 
         img1_batch = fix_batch # [B, 3, H, W]
         img2_batch = floating_batch  # [B, 3, H, W]
-        print("Refrence shape in compute flow  :",img1_batch.shape,"Target Shape in compute flow ", img2_batch.shape)
-
+       
         padder = InputPadder(img1_batch.shape)
         img1_batch, img2_batch = padder.pad(img1_batch, img2_batch)
        

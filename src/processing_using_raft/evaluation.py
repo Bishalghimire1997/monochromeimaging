@@ -38,17 +38,15 @@ class Evaluation ():
                 targ_cha.append(r_targ)
             return self.__str_sim(ref_cha,targ_cha)
         elif channel == "all":
+            r = []
+            t = []
             for ref,targ in zip(ref_images,target_images):
-                L_ref,a_ref,b_ref = cv2.split(cv2.cvtColor(ref,cv2.COLOR_BGR2Lab))
-                L_targ,a_targ,b_targ = cv2.split(cv2.cvtColor(targ,cv2.COLOR_BGR2Lab))
-                ref_cha.append(L_ref)               
-                targ_cha.append(L_targ)
-            return self.__str_sim(ref_cha,targ_cha)
-        else: return self.__str_sim(ref_images,target_images)
-               
-                
+                r.append(ref)
+                t.append(targ)
+
+
+            return self.__str_sim(r,t)
        
-        return structure_similarity
     def edge_structural_similarity(self,ref_images,target_images):
 
         edge_similarity = []
@@ -62,8 +60,8 @@ class Evaluation ():
         return edge_similarity
     def __str_sim(self,ref_edges,targ_edges):
         ind = []
-        for ref, targ in zip(ref_edges,targ_edges):           
-            ind.append(ssim(ref, targ,data_range=255))
+        for ref, targ in zip(ref_edges,targ_edges):         
+            ind.append(ssim(ref, targ,data_range=255,channel_axis=-1))
         return ind
 
     def _get_edge_mask(self,image):

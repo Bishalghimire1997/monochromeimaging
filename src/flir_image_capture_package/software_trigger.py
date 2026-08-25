@@ -157,7 +157,7 @@ class FlirTriggerControl():
             writer_process.daemon = True
             writer_process.start()       
         #time.sleep(2)       
-        for i in range(1000):
+        for i in range(10):
             print(i)
             if led_flash:                 
                  state.activate() 

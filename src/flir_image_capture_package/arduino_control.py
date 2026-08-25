@@ -2,7 +2,7 @@ import serial
 import time
 class ArduinoControl():
     def __init__(self):
-        self.port = "COM7"
+        self.port = "COM5"
         self.bud_rate = 9600
         self.ser = serial.Serial(self.port, self.bud_rate)
         time.sleep(2)

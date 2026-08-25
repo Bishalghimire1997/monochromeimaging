@@ -13,7 +13,7 @@ class FlirCamParam():
         """
         Initializes the FlirCamParam class with default values.
         """
-        self._path:str = "image.h5"
+        self._path:str = "position_5_R.h5"
         self._snap_count:int = 3000
         self._trigger:bool = False
         self._default_shutter_time:bool =False

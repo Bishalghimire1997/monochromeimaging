@@ -32,3 +32,6 @@ Thumbs.db
 *.pyc
 *.png
 *.mp4
+*.xlsx
+cell_div
+cell_motion
